@@ -87,6 +87,20 @@
   let audioUnlocked = false;
   let soundMuted = false;
 
+  /** Hosted MP3s on GitHub Pages (./sounds/). Synth is fallback only. */
+  const SOUND_FILES = {
+    hour: "./sounds/hour.mp3",
+    half: "./sounds/half.mp3",
+    ten: "./sounds/ten.mp3",
+    five: "./sounds/five.mp3", // klaxon
+    bells: "./sounds/bells.mp3",
+  };
+
+  /** @type {Record<string, HTMLAudioElement>} */
+  const soundPlayers = {};
+  /** @type {HTMLAudioElement | null} */
+  let activeSound = null;
+
   /** Festive palette — gold + jewel tones (no purple). */
   const PALETTE = {
     gold: [197, 160, 89],
@@ -248,8 +262,80 @@
     return audioCtx;
   }
 
+  function getSoundPlayer(id) {
+    const src = SOUND_FILES[id];
+    if (!src) return null;
+    if (!soundPlayers[id]) {
+      const audio = new Audio(src);
+      audio.preload = "auto";
+      audio.playsInline = true;
+      soundPlayers[id] = audio;
+    }
+    return soundPlayers[id];
+  }
+
+  function preloadSounds() {
+    Object.keys(SOUND_FILES).forEach((id) => getSoundPlayer(id));
+  }
+
   function unlockAudioFromGesture() {
     ensureAudio();
+    // Prime HTMLAudioElements after a user gesture so autoplay is allowed later
+    Object.values(soundPlayers).forEach((audio) => {
+      try {
+        audio.muted = true;
+        const p = audio.play();
+        if (p && typeof p.then === "function") {
+          p.then(() => {
+            audio.pause();
+            audio.currentTime = 0;
+            audio.muted = false;
+          }).catch(() => {
+            audio.muted = false;
+          });
+        } else {
+          audio.pause();
+          audio.currentTime = 0;
+          audio.muted = false;
+        }
+      } catch (_) {
+        audio.muted = false;
+      }
+    });
+    audioUnlocked = true;
+  }
+
+  function stopActiveSound() {
+    if (!activeSound) return;
+    try {
+      activeSound.pause();
+      activeSound.currentTime = 0;
+    } catch (_) {
+      /* ignore */
+    }
+    activeSound = null;
+  }
+
+  function playMp3(id) {
+    const audio = getSoundPlayer(id);
+    if (!audio) return false;
+    stopActiveSound();
+    try {
+      audio.muted = false;
+      audio.volume = id === "five" ? 1 : 0.9;
+      audio.currentTime = 0;
+      const playPromise = audio.play();
+      activeSound = audio;
+      if (playPromise && typeof playPromise.catch === "function") {
+        playPromise.catch(() => {
+          // Autoplay still blocked — fall back to Web Audio synth
+          playSynthWarning(id);
+        });
+      }
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   function playTone(freq, start, dur, type, gainVal, slideTo) {
@@ -300,12 +386,11 @@
   }
 
   /**
-   * Distinct escalating warning sounds (synthesized — no media files).
-   * hour: soft warm chime · half: brighter double chime · ten: fanfare
-   * five: urgent peal · bells: celebratory bell cascade
+   * Synth fallback if an MP3 fails to load/play.
+   * hour: soft chime · half: double chime · ten: fanfare
+   * five: klaxon tones · bells: celebratory peal
    */
-  function playWarningSound(id) {
-    if (soundMuted) return;
+  function playSynthWarning(id) {
     const ctx = ensureAudio();
     if (!ctx) return;
     const t0 = ctx.currentTime + 0.02;
@@ -329,22 +414,19 @@
         playNoiseBurst(t0 + 0.55, 0.25, 0.04);
         break;
       case "five":
-        playTone(311.13, t0, 0.28, "sawtooth", 0.07);
-        playTone(369.99, t0 + 0.22, 0.28, "sawtooth", 0.07);
-        playTone(466.16, t0 + 0.44, 0.35, "sawtooth", 0.08);
-        playTone(622.25, t0 + 0.7, 1.4, "triangle", 0.14);
-        playTone(933.88, t0 + 0.85, 1.2, "sine", 0.08);
-        playNoiseBurst(t0 + 0.7, 0.35, 0.055);
+        // Klaxon-style alternating tones
+        for (let i = 0; i < 6; i += 1) {
+          playTone(900, t0 + i * 0.56, 0.26, "sawtooth", 0.1);
+          playTone(620, t0 + i * 0.56 + 0.28, 0.26, "sawtooth", 0.1);
+        }
         break;
       case "bells":
-        // Deep peal + bright cascade
         [196, 246.94, 293.66, 392, 493.88, 587.33, 784].forEach((f, i) => {
           playTone(f, t0 + i * 0.18, 2.2 - i * 0.12, "sine", 0.1 - i * 0.008);
           playTone(f * 2, t0 + i * 0.18 + 0.04, 1.6, "triangle", 0.04);
         });
         playNoiseBurst(t0 + 0.2, 0.5, 0.045);
         playNoiseBurst(t0 + 1.2, 0.4, 0.035);
-        // Final resolve
         playTone(523.25, t0 + 1.6, 2.4, "sine", 0.12);
         playTone(659.25, t0 + 1.75, 2.5, "triangle", 0.09);
         playTone(783.99, t0 + 1.9, 2.6, "sine", 0.08);
@@ -352,6 +434,13 @@
       default:
         break;
     }
+  }
+
+  function playWarningSound(id) {
+    if (soundMuted) return;
+    unlockAudioFromGesture();
+    if (SOUND_FILES[id] && playMp3(id)) return;
+    playSynthWarning(id);
   }
 
   function phaseFromRemaining(remaining) {
@@ -465,6 +554,7 @@
     fxUntil = 0;
     hideBanner();
     clearFxClasses();
+    stopActiveSound();
     if (keepCelebrate) document.body.classList.add("is-celebrate");
     ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
   }
@@ -1095,6 +1185,7 @@
   function start() {
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
+    preloadSounds();
     // Browsers need a gesture before sound; unlock on first interaction
     const unlockOnce = () => {
       unlockAudioFromGesture();
