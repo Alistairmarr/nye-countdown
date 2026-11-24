@@ -24,36 +24,36 @@
     hour: {
       label: "One hour to the bells",
       style: "embers",
-      duration: 16_000,
-      bannerMs: 16_000,
+      duration: 22_000,
+      bannerMs: 22_000,
       bodyClass: "fx-hour fx-pulse",
     },
     half: {
       label: "Thirty minutes to go",
       style: "ribbons",
-      duration: 20_000,
-      bannerMs: 20_000,
+      duration: 26_000,
+      bannerMs: 26_000,
       bodyClass: "fx-half fx-pulse",
     },
     ten: {
       label: "Ten minutes — nearly there",
       style: "fireworks",
-      duration: 24_000,
-      bannerMs: 24_000,
+      duration: 30_000,
+      bannerMs: 30_000,
       bodyClass: "fx-ten fx-pulse",
     },
     five: {
       label: "Five minutes to midnight",
       style: "meteors",
-      duration: 30_000,
-      bannerMs: 30_000,
+      duration: 36_000,
+      bannerMs: 36_000,
       bodyClass: "fx-five fx-urgent",
     },
     bells: {
       label: "Happy New Year — the bells!",
       style: "finale",
       duration: CELEBRATE_MS,
-      bannerMs: 36_000,
+      bannerMs: 40_000,
       bodyClass: "fx-bells is-celebrate fx-urgent",
     },
   };
@@ -268,18 +268,60 @@
     phaseLockUntil = nowWallMs() + ms;
   }
 
+  /** Continuous ambient excitement that builds with the current phase. */
+  function ambientExcitement(phase, warmth) {
+    if (reduceMotion || phase === "day") return;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    // Ramp spawn chance hard so a big TV clearly “wakes up”
+    const tick = 0.04 + warmth * 0.22;
+    if (Math.random() > tick) return;
+
+    switch (phase) {
+      case "hour":
+        spawnEmbers(4 + Math.floor(warmth * 6));
+        spawnGlitter(2);
+        break;
+      case "half":
+        if (Math.random() < 0.55) spawnRibbonWave(4 + Math.floor(Math.random() * 4));
+        spawnGlitter(3);
+        spawnEmbers(2);
+        break;
+      case "ten":
+        if (Math.random() < 0.45) {
+          const o = burstOrigin();
+          spawnBurst(o.x, o.y, 0.85 + Math.random() * 0.4);
+        }
+        spawnStars(2);
+        spawnGlitter(3);
+        break;
+      case "five":
+        spawnMeteors(2 + Math.floor(Math.random() * 3));
+        if (Math.random() < 0.35) {
+          const o = burstOrigin();
+          spawnBurst(o.x, o.y, 1.0 + Math.random() * 0.35);
+        }
+        spawnStars(3);
+        break;
+      case "bells":
+        {
+          const o = burstOrigin();
+          spawnBurst(o.x, o.y, 1.3 + Math.random() * 0.6);
+          if (Math.random() < 0.5) spawnRing(o.x, o.y, 1.1);
+          spawnConfetti(6);
+          spawnStars(4);
+        }
+        break;
+      default:
+        break;
+    }
+  }
+
   /** Page atmosphere shifts as midnight nears (independent of one-shot FX). */
   function updatePhase(remaining) {
     const now = nowWallMs();
     if (phaseLockUntil && now < phaseLockUntil) {
-      // Keep test/preview atmosphere; still allow light ambient glitter
-      if (
-        !reduceMotion &&
-        currentPhase !== "day" &&
-        Math.random() < 0.02 + warmthForPhase(currentPhase, 0) * 0.05
-      ) {
-        spawnGlitter(1 + Math.floor(warmthForPhase(currentPhase, 0) * 3));
-      }
+      ambientExcitement(currentPhase, warmthForPhase(currentPhase, 0));
       return;
     }
     if (phaseLockUntil && now >= phaseLockUntil) {
@@ -289,10 +331,7 @@
     const phase = phaseFromRemaining(remaining);
     const warmth = warmthForPhase(phase, remaining);
     applyPhase(phase, warmth);
-
-    if (!reduceMotion && phase !== "day" && Math.random() < 0.015 + warmth * 0.04) {
-      spawnGlitter(1 + Math.floor(warmth * 3));
-    }
+    ambientExcitement(phase, warmth);
   }
 
   function clearEffects({ keepCelebrate = false } = {}) {
@@ -518,30 +557,37 @@
     const t = nowWallMs();
     switch (fxMode) {
       case "hour":
-        if (Math.random() < 0.18) spawnEmbers(5);
+        if (Math.random() < 0.28) spawnEmbers(8);
+        if (Math.random() < 0.1) spawnGlitter(4);
         break;
       case "half":
-        if (Math.random() < 0.09) spawnRibbonWave(8 + Math.floor(Math.random() * 5));
-        if (Math.random() < 0.06) spawnGlitter(6);
+        if (Math.random() < 0.14) spawnRibbonWave(10 + Math.floor(Math.random() * 6));
+        if (Math.random() < 0.1) spawnGlitter(8);
+        if (Math.random() < 0.08) spawnEmbers(4);
         break;
       case "ten":
-        if (Math.random() < 0.1) {
+        if (Math.random() < 0.16) {
           const o = burstOrigin();
-          spawnBurst(o.x, o.y, 1.15 + Math.random() * 0.45);
+          spawnBurst(o.x, o.y, 1.25 + Math.random() * 0.5);
         }
+        if (Math.random() < 0.08) spawnStars(3);
         break;
       case "five":
-        if (Math.random() < 0.16) spawnMeteors(2 + Math.floor(Math.random() * 3));
-        if (Math.random() < 0.06) spawnStars(3);
+        if (Math.random() < 0.24) spawnMeteors(3 + Math.floor(Math.random() * 4));
+        if (Math.random() < 0.1) spawnStars(4);
+        if (Math.random() < 0.08) {
+          const o = burstOrigin();
+          spawnBurst(o.x, o.y, 1.15);
+        }
         break;
       case "bells":
-        if (Math.random() < 0.2) {
+        if (Math.random() < 0.3) {
           const o = burstOrigin();
-          spawnBurst(o.x, o.y, 1.5 + Math.random() * 0.7);
-          if (Math.random() < 0.55) spawnRing(o.x, o.y, 1.1 + Math.random() * 0.5);
+          spawnBurst(o.x, o.y, 1.65 + Math.random() * 0.75);
+          if (Math.random() < 0.6) spawnRing(o.x, o.y, 1.2 + Math.random() * 0.5);
         }
-        if (Math.random() < 0.12) spawnConfetti(10);
-        if (Math.random() < 0.1) spawnStars(6);
+        if (Math.random() < 0.18) spawnConfetti(14);
+        if (Math.random() < 0.14) spawnStars(8);
         break;
       default:
         break;
@@ -723,40 +769,47 @@
     }
     showBanner(cfg.label, cfg.bannerMs || cfg.duration);
 
-    // Distinct opening volley per style — bigger + colourful
+    // Distinct opening volley — punchy for a big TV, still contained
     switch (cfg.style) {
       case "embers":
-        spawnEmbers(140);
-        spawnGlitter(40);
+        spawnEmbers(200);
+        spawnGlitter(70);
+        spawnStars(20);
         break;
       case "ribbons":
-        spawnRibbonWave(40);
-        spawnGlitter(55);
-        setTimeout(() => spawnRibbonWave(32), 350);
-        setTimeout(() => spawnRibbonWave(28), 800);
+        spawnRibbonWave(55);
+        spawnGlitter(80);
+        spawnEmbers(30);
+        setTimeout(() => spawnRibbonWave(45), 300);
+        setTimeout(() => spawnRibbonWave(40), 700);
+        setTimeout(() => spawnRibbonWave(35), 1200);
         break;
       case "fireworks":
-        spawnBurst(w * 0.28, h * 0.22, 1.35);
-        spawnBurst(w * 0.5, h * 0.16, 1.55);
-        spawnBurst(w * 0.72, h * 0.24, 1.35);
-        spawnBurst(w * 0.4, h * 0.3, 1.15);
-        spawnBurst(w * 0.6, h * 0.28, 1.15);
-        spawnStars(50);
+        spawnBurst(w * 0.28, h * 0.22, 1.55);
+        spawnBurst(w * 0.5, h * 0.16, 1.75);
+        spawnBurst(w * 0.72, h * 0.24, 1.55);
+        spawnBurst(w * 0.38, h * 0.3, 1.35);
+        spawnBurst(w * 0.62, h * 0.28, 1.35);
+        spawnStars(80);
+        spawnGlitter(40);
         break;
       case "meteors":
-        spawnMeteors(26);
-        spawnStars(36);
-        setTimeout(() => spawnMeteors(20), 320);
-        setTimeout(() => spawnMeteors(16), 700);
+        spawnMeteors(40);
+        spawnStars(60);
+        spawnGlitter(40);
+        setTimeout(() => spawnMeteors(32), 280);
+        setTimeout(() => spawnMeteors(28), 600);
+        setTimeout(() => spawnMeteors(24), 1000);
         break;
       case "finale":
-        spawnConfetti(140);
-        spawnStars(90);
-        spawnGlitter(70);
-        for (let i = 0; i < 12; i += 1) {
+        spawnConfetti(220);
+        spawnStars(140);
+        spawnGlitter(100);
+        spawnEmbers(40);
+        for (let i = 0; i < 16; i += 1) {
           const o = burstOrigin();
-          spawnBurst(o.x, o.y, 1.6 + Math.random() * 0.7);
-          if (i % 2 === 0) spawnRing(o.x, o.y, 1.15 + Math.random() * 0.4);
+          spawnBurst(o.x, o.y, 1.75 + Math.random() * 0.7);
+          if (i % 2 === 0) spawnRing(o.x, o.y, 1.25 + Math.random() * 0.4);
         }
         break;
       default:
