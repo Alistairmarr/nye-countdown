@@ -69,6 +69,17 @@
     "is-celebrate",
   ];
 
+  const PHASE_CLASSES = [
+    "phase-day",
+    "phase-hour",
+    "phase-half",
+    "phase-ten",
+    "phase-five",
+    "phase-bells",
+  ];
+
+  let currentPhase = "day";
+
   /** Festive palette — gold + jewel tones (no purple). */
   const PALETTE = {
     gold: [197, 160, 89],
@@ -215,6 +226,39 @@
 
   function clearFxClasses() {
     document.body.classList.remove(...FX_BODY_CLASSES);
+  }
+
+  function phaseFromRemaining(remaining) {
+    if (celebrating || remaining <= 0) return "bells";
+    if (remaining <= 300_000) return "five";
+    if (remaining <= 600_000) return "ten";
+    if (remaining <= 1_800_000) return "half";
+    if (remaining <= 3_600_000) return "hour";
+    return "day";
+  }
+
+  /** Page atmosphere shifts as midnight nears (independent of one-shot FX). */
+  function updatePhase(remaining) {
+    const phase = phaseFromRemaining(remaining);
+    if (phase !== currentPhase) {
+      document.body.classList.remove(...PHASE_CLASSES);
+      document.body.classList.add(`phase-${phase}`);
+      currentPhase = phase;
+    }
+
+    // Smooth warmth 0→1 across the final hour (and full during bells)
+    let warmth = 0;
+    if (phase === "bells") warmth = 1;
+    else if (remaining <= 3_600_000) {
+      warmth = 1 - Math.max(0, remaining) / 3_600_000;
+      warmth = Math.pow(warmth, 0.85);
+    }
+    document.documentElement.style.setProperty("--phase-warmth", warmth.toFixed(3));
+
+    // Subtle ambient glitter in later phases (not during reduce-motion)
+    if (!reduceMotion && phase !== "day" && Math.random() < 0.015 + warmth * 0.04) {
+      spawnGlitter(1 + Math.floor(warmth * 3));
+    }
   }
 
   function clearEffects({ keepCelebrate = false } = {}) {
@@ -768,14 +812,17 @@
 
     if (celebrating) {
       render(0);
+      updatePhase(0);
       if (wall >= celebrateUntil) {
         celebrating = false;
         clearEffects();
         showCountdownCopy();
+        updatePhase(targetMs - nowWallMs());
       }
     } else {
       render(remaining);
       checkMilestones(remaining);
+      updatePhase(remaining);
     }
 
     if (bannerUntil && wall >= bannerUntil && fxMode !== "bells") {
@@ -805,6 +852,33 @@
         els.celebrate.hidden = true;
         document.body.classList.remove("is-celebrate");
       }
+
+      // Preview matching page atmosphere while testing
+      if (id !== "clear") {
+        const phase = id === "bells" ? "bells" : id;
+        document.body.classList.remove(...PHASE_CLASSES);
+        document.body.classList.add(`phase-${phase}`);
+        currentPhase = phase;
+        const warmth =
+          phase === "bells"
+            ? 1
+            : phase === "five"
+              ? 0.92
+              : phase === "ten"
+                ? 0.78
+                : phase === "half"
+                  ? 0.55
+                  : phase === "hour"
+                    ? 0.28
+                    : 0;
+        document.documentElement.style.setProperty(
+          "--phase-warmth",
+          String(warmth)
+        );
+      } else {
+        updatePhase(Math.max(0, targetMs - nowWallMs()));
+      }
+
       playEffect(id, { testing: true });
     });
   }
@@ -820,6 +894,7 @@
     for (const m of MILESTONES) {
       if (remaining <= m.atMs) firedMilestones.add(m.id);
     }
+    updatePhase(remaining);
 
     setInterval(resyncWallClock, RESYNC_MS);
     document.addEventListener("visibilitychange", () => {
