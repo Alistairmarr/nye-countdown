@@ -1,33 +1,20 @@
-# NYE — High-precision New Year countdown
+# Hogmanay Bash — Countdown to the bells
 
-A single-page countdown to the next local New Year's midnight
-(January 1, 00:00:00.000 in the viewer's timezone), published on GitHub Pages.
+High-precision New Year countdown for **Ancrum Bowling Club / Ancrum Fete**, styled after the Hogmanay Bash poster.
 
 **Live:** https://alistairmarr.github.io/nye-countdown/
 
 **Repo:** https://github.com/Alistairmarr/nye-countdown
 
-## Accuracy
+## Features
 
-- Target is computed with local `Date` constructors (`new Date(year, 0, 1)`), so DST and timezone offsets are handled by the browser's local calendar APIs.
-- Display updates on every `requestAnimationFrame` for smooth millisecond digits.
-- Wall time is estimated as `sync.wallMs + (performance.now() - sync.perfMs)` — a high-resolution monotonic clock anchored to `Date.now()`.
-- The wall-clock anchor is re-synced every 30 seconds (and when the tab becomes visible again) to correct any drift between `performance.now()` and system time.
-- Units shown: days, hours, minutes, seconds, and milliseconds.
-- After midnight, a short “Happy New Year” celebration plays, then the timer rolls to the following January 1.
+- Countdown to next local midnight 1 January (days → milliseconds)
+- High-res clock: `performance.now()` anchored to `Date.now()`, re-synced every 30s
+- Smooth `requestAnimationFrame` updates
+- Milestone effects: 1 hour, 30 minutes, 10 minutes, 5 minutes
+- Big “bells” celebration at midnight
+- Temporary **Test effects** panel (bottom-right) — remove nearer the night
 
 ## Stack
 
-Vanilla HTML, CSS, and JavaScript. No build step, no backend, no secrets.
-
-## Local preview
-
-Open `index.html` in a browser, or serve the folder:
-
-```bash
-python3 -m http.server 8080 --bind 127.0.0.1
-```
-
-## GitHub Pages
-
-Deployed from the `main` branch root via GitHub Actions (see `.github/workflows/pages.yml`).
+Vanilla HTML, CSS, and JavaScript. No build step. GitHub Pages via Actions.

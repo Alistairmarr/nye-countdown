@@ -1,33 +1,45 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="NYE — a high-precision countdown to your local New Year's midnight."
+      content="Hogmanay Bash countdown for Ancrum Bowling Club — high-precision timer to the bells."
     />
-    <title>NYE — New Year Countdown</title>
+    <title>Hogmanay Bash — Countdown to the Bells</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Manrope:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Playfair+Display:wght@700;800&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <div class="atmosphere" aria-hidden="true">
-      <div class="orb orb-a"></div>
-      <div class="orb orb-b"></div>
-      <div class="haze"></div>
+      <div class="paper-grain"></div>
+      <div class="glitter glitter-tl"></div>
+      <div class="glitter glitter-br"></div>
+      <div class="ribbon ribbon-left"></div>
+      <div class="ribbon ribbon-right"></div>
     </div>
 
+    <canvas id="fx-canvas" class="fx-canvas" aria-hidden="true"></canvas>
+
     <main class="stage">
-      <p class="brand">NYE</p>
-      <h1 class="headline" id="headline">Countdown to local midnight</h1>
+      <p class="host">Ancrum Bowling Club</p>
+
+      <div class="brand-lockup">
+        <p class="brand-serif">Hogmanay</p>
+        <p class="brand-script">Bash</p>
+      </div>
+
+      <div class="rule" aria-hidden="true"><span class="star">★</span></div>
+
+      <h1 class="headline" id="headline">Countdown to the bells</h1>
       <p class="support" id="support">
-        Precision timer for January 1 in your timezone.
+        Ancrum Fete New Year’s Eve — local midnight, high precision.
       </p>
 
       <div
@@ -65,11 +77,32 @@
 
       <p class="timezone" id="timezone"></p>
 
+      <div class="banner" id="milestone-banner" hidden>
+        <p class="banner-text" id="milestone-text"></p>
+      </div>
+
       <section class="celebrate" id="celebrate" hidden>
         <p class="celebrate-title">Happy New Year</p>
+        <p class="celebrate-script">The bells!</p>
         <p class="celebrate-year" id="celebrate-year"></p>
       </section>
     </main>
+
+    <!-- Temporary test panel — remove nearer the night -->
+    <aside class="test-panel" id="test-panel" aria-label="Effect test menu">
+      <button type="button" class="test-toggle" id="test-toggle" aria-expanded="false">
+        Test effects
+      </button>
+      <div class="test-body" id="test-body" hidden>
+        <p class="test-note">Temporary — remove nearer the time</p>
+        <button type="button" data-test="hour">1 hour warning</button>
+        <button type="button" data-test="half">30 minute warning</button>
+        <button type="button" data-test="ten">10 minute warning</button>
+        <button type="button" data-test="five">5 minute warning</button>
+        <button type="button" data-test="bells">The bells</button>
+        <button type="button" data-test="clear">Clear effects</button>
+      </div>
+    </aside>
 
     <script src="./app.js" defer></script>
   </body>
