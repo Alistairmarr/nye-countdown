@@ -124,7 +124,7 @@ body {
 .fx-canvas {
   position: fixed;
   inset: 0;
-  z-index: 2;
+  z-index: 1; /* behind copy so text stays readable */
   width: 100%;
   height: 100%;
   pointer-events: none;
@@ -132,7 +132,7 @@ body {
 
 .stage {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
@@ -141,6 +141,41 @@ body {
   text-align: center;
   padding: clamp(1.5rem, 4vw, 3rem);
   animation: enter 900ms var(--ease-out) both;
+}
+
+/* Soft paper scrim so type stays crisp when FX are dense behind */
+.brand-lockup,
+.headline,
+.support,
+.countdown,
+.timezone,
+.banner,
+.celebrate {
+  position: relative;
+  z-index: 1;
+}
+
+.countdown,
+.banner,
+.celebrate {
+  padding-inline: 0.75rem;
+}
+
+.countdown {
+  border-radius: 0.35rem;
+  background: rgba(253, 250, 241, 0.72);
+  box-shadow: 0 0 40px 28px rgba(253, 250, 241, 0.72);
+}
+
+.headline,
+.support,
+.timezone,
+.host {
+  text-shadow: 0 0 18px rgba(253, 250, 241, 0.95), 0 1px 0 rgba(253, 250, 241, 0.8);
+}
+
+.brand-serif {
+  text-shadow: 0 0 24px rgba(253, 250, 241, 0.9);
 }
 
 .host {

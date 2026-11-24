@@ -313,34 +313,50 @@
     }
   }
 
+  /** Keep bursts in a readable band — not flying off the far edges. */
+  function burstOrigin() {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    return {
+      x: w * (0.18 + Math.random() * 0.64),
+      y: h * (0.12 + Math.random() * 0.38),
+    };
+  }
+
   function spawnBurst(x, y, strength = 1) {
     const burstColors = [PALETTE.gold, PALETTE.ruby, PALETTE.emerald, PALETTE.copper, PALETTE.champagne];
     const color = pick(burstColors);
+    // Cap travel so fireworks bloom nearby instead of racing across the whole screen
+    const maxR = Math.min(
+      70 + strength * 55,
+      Math.min(window.innerWidth, window.innerHeight) * 0.28
+    );
     bursts.push({
       x,
       y,
       r: 0,
-      max: 140 + strength * 200,
+      max: maxR,
       life: 1,
-      decay: 0.005 / Math.max(strength, 0.5),
-      rays: 18 + Math.floor(strength * 14),
+      decay: 0.008 / Math.max(strength, 0.5),
+      rays: 16 + Math.floor(strength * 10),
       kind: "rays",
       color,
     });
-    const n = Math.floor(48 * strength);
+    const n = Math.floor(36 * strength);
     for (let i = 0; i < n; i += 1) {
       const a = (Math.PI * 2 * i) / n + Math.random() * 0.2;
-      const speed = (3.2 + Math.random() * 5.5) * strength;
+      const speed = (1.4 + Math.random() * 2.2) * Math.min(strength, 2.2);
       particles.push({
         kind: "spark",
         x,
         y,
         vx: Math.cos(a) * speed,
         vy: Math.sin(a) * speed,
-        size: 3.2 + Math.random() * 5.5,
+        size: 2.8 + Math.random() * 4.5,
         life: 1,
-        decay: 0.0035 + Math.random() * 0.005,
+        decay: 0.006 + Math.random() * 0.008,
         color: mixTone(i % 3 === 0 ? pick(burstColors) : color),
+        drag: 0.96,
       });
     }
   }
@@ -352,10 +368,10 @@
       x,
       y,
       r: 6,
-      max: 160 + strength * 240,
+      max: Math.min(90 + strength * 70, Math.min(window.innerWidth, window.innerHeight) * 0.32),
       life: 1,
-      decay: 0.0065 / Math.max(strength, 0.5),
-      line: 4 + strength * 3,
+      decay: 0.009 / Math.max(strength, 0.5),
+      line: 3.5 + strength * 2,
       color: pick([PALETTE.gold, PALETTE.ruby, PALETTE.emerald, PALETTE.champagne]),
     });
   }
@@ -366,17 +382,17 @@
     const h = window.innerHeight;
     const colors = [PALETTE.ruby, PALETTE.gold, PALETTE.champagne, PALETTE.copper, PALETTE.emerald];
     for (let i = 0; i < count; i += 1) {
-      const speed = 9 + Math.random() * 12;
+      const speed = 5.5 + Math.random() * 6;
       particles.push({
         kind: "meteor",
-        x: Math.random() * w * 1.25 - w * 0.1,
-        y: -40 - Math.random() * h * 0.45,
-        vx: 4 + Math.random() * 5,
+        x: w * (0.05 + Math.random() * 0.7),
+        y: -20 - Math.random() * h * 0.2,
+        vx: 2 + Math.random() * 2.5,
         vy: speed,
-        length: 48 + Math.random() * 70,
-        width: 3 + Math.random() * 4,
+        length: 28 + Math.random() * 36,
+        width: 2.5 + Math.random() * 3,
         life: 1,
-        decay: 0.0016 + Math.random() * 0.002,
+        decay: 0.0025 + Math.random() * 0.003,
         color: mixTone(pick(colors)),
       });
     }
@@ -431,27 +447,23 @@
         if (Math.random() < 0.06) spawnGlitter(6);
         break;
       case "ten":
-        if (Math.random() < 0.12) {
-          spawnBurst(
-            Math.random() * w,
-            h * (0.1 + Math.random() * 0.45),
-            1.45 + Math.random() * 0.7
-          );
+        if (Math.random() < 0.1) {
+          const o = burstOrigin();
+          spawnBurst(o.x, o.y, 1.15 + Math.random() * 0.45);
         }
         break;
       case "five":
-        if (Math.random() < 0.22) spawnMeteors(4 + Math.floor(Math.random() * 4));
-        if (Math.random() < 0.07) spawnStars(4);
+        if (Math.random() < 0.16) spawnMeteors(2 + Math.floor(Math.random() * 3));
+        if (Math.random() < 0.06) spawnStars(3);
         break;
       case "bells":
-        if (Math.random() < 0.28) {
-          const x = Math.random() * w;
-          const y = Math.random() * h * 0.58;
-          spawnBurst(x, y, 2.3 + Math.random() * 1.6);
-          if (Math.random() < 0.6) spawnRing(x, y, 1.5 + Math.random());
+        if (Math.random() < 0.2) {
+          const o = burstOrigin();
+          spawnBurst(o.x, o.y, 1.5 + Math.random() * 0.7);
+          if (Math.random() < 0.55) spawnRing(o.x, o.y, 1.1 + Math.random() * 0.5);
         }
-        if (Math.random() < 0.16) spawnConfetti(14);
-        if (Math.random() < 0.12) spawnStars(10);
+        if (Math.random() < 0.12) spawnConfetti(10);
+        if (Math.random() < 0.1) spawnStars(6);
         break;
       default:
         break;
@@ -578,9 +590,13 @@
         ctx.fillStyle = rgba(c, a);
         ctx.fillRect(p.x, p.y, p.size, p.size);
       } else {
+        if (p.drag) {
+          p.vx *= p.drag;
+          p.vy *= p.drag;
+        }
         p.x += p.vx;
         p.y += p.vy;
-        p.vy += 0.02;
+        p.vy += 0.015;
         ctx.fillStyle = rgba(c, a);
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
@@ -642,29 +658,27 @@
         setTimeout(() => spawnRibbonWave(28), 800);
         break;
       case "fireworks":
-        spawnBurst(w * 0.18, h * 0.22, 1.85);
-        spawnBurst(w * 0.5, h * 0.14, 2.2);
-        spawnBurst(w * 0.82, h * 0.24, 1.85);
-        spawnBurst(w * 0.35, h * 0.32, 1.5);
-        spawnBurst(w * 0.65, h * 0.3, 1.5);
-        spawnStars(70);
+        spawnBurst(w * 0.28, h * 0.22, 1.35);
+        spawnBurst(w * 0.5, h * 0.16, 1.55);
+        spawnBurst(w * 0.72, h * 0.24, 1.35);
+        spawnBurst(w * 0.4, h * 0.3, 1.15);
+        spawnBurst(w * 0.6, h * 0.28, 1.15);
+        spawnStars(50);
         break;
       case "meteors":
-        spawnMeteors(42);
-        spawnStars(50);
-        setTimeout(() => spawnMeteors(34), 300);
-        setTimeout(() => spawnMeteors(28), 650);
-        setTimeout(() => spawnMeteors(22), 1100);
+        spawnMeteors(26);
+        spawnStars(36);
+        setTimeout(() => spawnMeteors(20), 320);
+        setTimeout(() => spawnMeteors(16), 700);
         break;
       case "finale":
-        spawnConfetti(200);
-        spawnStars(160);
-        spawnGlitter(120);
-        for (let i = 0; i < 20; i += 1) {
-          const x = Math.random() * w;
-          const y = Math.random() * h * 0.58;
-          spawnBurst(x, y, 2.5 + Math.random() * 1.5);
-          if (i % 2 === 0) spawnRing(x, y, 1.7 + Math.random());
+        spawnConfetti(140);
+        spawnStars(90);
+        spawnGlitter(70);
+        for (let i = 0; i < 12; i += 1) {
+          const o = burstOrigin();
+          spawnBurst(o.x, o.y, 1.6 + Math.random() * 0.7);
+          if (i % 2 === 0) spawnRing(o.x, o.y, 1.15 + Math.random() * 0.4);
         }
         break;
       default:
