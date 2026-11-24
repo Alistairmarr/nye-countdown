@@ -12,83 +12,62 @@
     { id: "five", atMs: 300_000, label: "Five minutes to midnight" },
   ];
 
-  /** Progressive intensity ladder — each step clearly bigger than the last. */
+  /**
+   * Each milestone has a distinct visual language, and intensity rises toward midnight.
+   * hour  = rising gold embers (gentle notice)
+   * half  = sweeping ribbon waves across the screen
+   * ten   = classic firework bursts
+   * five  = diagonal meteor shower (urgent)
+   * bells = everything at once — fireworks + confetti + ring pulses
+   */
   const FX_LADDER = {
     hour: {
       label: "One hour to the bells",
+      style: "embers",
       duration: 16_000,
       bannerMs: 16_000,
-      bodyClass: "fx-pulse",
-      glitter: 50,
-      stars: 28,
-      bursts: [{ x: 0.5, y: 0.28, s: 0.75 }],
-      ongoingBurst: 0.02,
-      ongoingBurstS: 0.55,
-      ongoingStars: 1,
+      bodyClass: "fx-hour fx-pulse",
     },
     half: {
       label: "Thirty minutes to go",
+      style: "ribbons",
       duration: 20_000,
       bannerMs: 20_000,
-      bodyClass: "fx-pulse",
-      glitter: 110,
-      stars: 70,
-      bursts: [
-        { x: 0.28, y: 0.26, s: 1.05 },
-        { x: 0.72, y: 0.24, s: 1.05 },
-      ],
-      ongoingBurst: 0.045,
-      ongoingBurstS: 0.85,
-      ongoingStars: 2,
+      bodyClass: "fx-half fx-pulse",
     },
     ten: {
       label: "Ten minutes — nearly there",
+      style: "fireworks",
       duration: 24_000,
       bannerMs: 24_000,
-      bodyClass: "fx-pulse",
-      glitter: 160,
-      stars: 140,
-      bursts: [
-        { x: 0.18, y: 0.24, s: 1.35 },
-        { x: 0.5, y: 0.16, s: 1.55 },
-        { x: 0.82, y: 0.22, s: 1.35 },
-      ],
-      ongoingBurst: 0.08,
-      ongoingBurstS: 1.15,
-      ongoingStars: 4,
+      bodyClass: "fx-ten fx-pulse",
     },
     five: {
       label: "Five minutes to midnight",
+      style: "meteors",
       duration: 30_000,
       bannerMs: 30_000,
-      bodyClass: "fx-urgent",
-      glitter: 240,
-      stars: 220,
-      bursts: [
-        { x: 0.12, y: 0.22, s: 1.7 },
-        { x: 0.35, y: 0.14, s: 1.95 },
-        { x: 0.65, y: 0.15, s: 1.95 },
-        { x: 0.88, y: 0.22, s: 1.7 },
-        { x: 0.5, y: 0.3, s: 1.6 },
-      ],
-      ongoingBurst: 0.13,
-      ongoingBurstS: 1.45,
-      ongoingStars: 7,
+      bodyClass: "fx-five fx-urgent",
     },
     bells: {
       label: "Happy New Year — the bells!",
+      style: "finale",
       duration: CELEBRATE_MS,
       bannerMs: 36_000,
-      bodyClass: "is-celebrate fx-urgent",
-      glitter: 360,
-      stars: 340,
-      burstCount: 22,
-      burstStrength: [2.1, 3.2],
-      ongoingBurst: 0.22,
-      ongoingBurstS: 2.0,
-      ongoingStars: 12,
+      bodyClass: "fx-bells is-celebrate fx-urgent",
     },
   };
+
+  const FX_BODY_CLASSES = [
+    "fx-hour",
+    "fx-half",
+    "fx-ten",
+    "fx-five",
+    "fx-bells",
+    "fx-pulse",
+    "fx-urgent",
+    "is-celebrate",
+  ];
 
   const els = {
     headline: document.getElementById("headline"),
@@ -207,7 +186,7 @@
   }
 
   function clearFxClasses() {
-    document.body.classList.remove("fx-pulse", "fx-urgent", "is-celebrate");
+    document.body.classList.remove(...FX_BODY_CLASSES);
   }
 
   function clearEffects({ keepCelebrate = false } = {}) {
@@ -216,10 +195,8 @@
     fxMode = "idle";
     fxUntil = 0;
     hideBanner();
-    document.body.classList.remove("fx-pulse", "fx-urgent");
-    if (!keepCelebrate) {
-      document.body.classList.remove("is-celebrate");
-    }
+    clearFxClasses();
+    if (keepCelebrate) document.body.classList.add("is-celebrate");
     ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
   }
 
@@ -259,6 +236,47 @@
     }
   }
 
+  /** Soft rising gold embers — 1 hour warning */
+  function spawnEmbers(count) {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    for (let i = 0; i < count; i += 1) {
+      particles.push({
+        kind: "ember",
+        x: Math.random() * w,
+        y: h + 10 + Math.random() * 80,
+        vx: (Math.random() - 0.5) * 0.35,
+        vy: -(0.6 + Math.random() * 1.4),
+        size: 2 + Math.random() * 4,
+        life: 1,
+        decay: 0.0008 + Math.random() * 0.0012,
+        wobble: Math.random() * Math.PI * 2,
+      });
+    }
+  }
+
+  /** Horizontal ribbon streaks — 30 minute warning */
+  function spawnRibbonWave(count) {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const fromLeft = Math.random() > 0.5;
+    for (let i = 0; i < count; i += 1) {
+      const y = h * (0.15 + Math.random() * 0.7);
+      particles.push({
+        kind: "ribbon",
+        x: fromLeft ? -40 - Math.random() * 80 : w + 40 + Math.random() * 80,
+        y,
+        vx: (fromLeft ? 1 : -1) * (4.5 + Math.random() * 5.5),
+        vy: Math.sin(i) * 0.35,
+        length: 40 + Math.random() * 70,
+        width: 2 + Math.random() * 3.5,
+        life: 1,
+        decay: 0.0012 + Math.random() * 0.001,
+        curl: (Math.random() - 0.5) * 0.08,
+      });
+    }
+  }
+
   function spawnBurst(x, y, strength = 1) {
     bursts.push({
       x,
@@ -268,6 +286,7 @@
       life: 1,
       decay: 0.006 / Math.max(strength, 0.5),
       rays: 14 + Math.floor(strength * 12),
+      kind: "rays",
     });
     const n = Math.floor(36 * strength);
     for (let i = 0; i < n; i += 1) {
@@ -282,6 +301,61 @@
         size: 2.2 + Math.random() * 3.8,
         life: 1,
         decay: 0.0045 + Math.random() * 0.006,
+      });
+    }
+  }
+
+  /** Expanding gold rings — used in finale */
+  function spawnRing(x, y, strength = 1) {
+    bursts.push({
+      kind: "ring",
+      x,
+      y,
+      r: 4,
+      max: 120 + strength * 180,
+      life: 1,
+      decay: 0.008 / Math.max(strength, 0.5),
+      line: 3 + strength * 2,
+    });
+  }
+
+  /** Fast diagonal meteors — 5 minute warning */
+  function spawnMeteors(count) {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    for (let i = 0; i < count; i += 1) {
+      const speed = 7 + Math.random() * 9;
+      particles.push({
+        kind: "meteor",
+        x: Math.random() * w * 1.2 - w * 0.1,
+        y: -30 - Math.random() * h * 0.4,
+        vx: 3 + Math.random() * 4,
+        vy: speed,
+        length: 28 + Math.random() * 48,
+        width: 2 + Math.random() * 2.5,
+        life: 1,
+        decay: 0.002 + Math.random() * 0.0025,
+      });
+    }
+  }
+
+  /** Falling confetti rectangles — finale accent */
+  function spawnConfetti(count) {
+    const w = window.innerWidth;
+    for (let i = 0; i < count; i += 1) {
+      particles.push({
+        kind: "confetti",
+        x: Math.random() * w,
+        y: -20 - Math.random() * 120,
+        vx: (Math.random() - 0.5) * 2.2,
+        vy: 1.4 + Math.random() * 2.6,
+        rot: Math.random() * Math.PI,
+        vr: (Math.random() - 0.5) * 0.2,
+        w: 5 + Math.random() * 8,
+        h: 3 + Math.random() * 5,
+        life: 1,
+        decay: 0.0006 + Math.random() * 0.0009,
+        tone: Math.random(),
       });
     }
   }
@@ -303,63 +377,174 @@
     ctx.restore();
   }
 
+  function ongoingFx(w, h) {
+    const t = nowWallMs();
+    switch (fxMode) {
+      case "hour":
+        if (Math.random() < 0.12) spawnEmbers(3);
+        break;
+      case "half":
+        if (Math.random() < 0.06) spawnRibbonWave(5 + Math.floor(Math.random() * 4));
+        if (Math.random() < 0.04) spawnGlitter(4);
+        break;
+      case "ten":
+        if (Math.random() < 0.085) {
+          spawnBurst(
+            Math.random() * w,
+            h * (0.12 + Math.random() * 0.4),
+            1.1 + Math.random() * 0.5
+          );
+        }
+        break;
+      case "five":
+        if (Math.random() < 0.16) spawnMeteors(2 + Math.floor(Math.random() * 3));
+        if (Math.random() < 0.05) spawnStars(2);
+        break;
+      case "bells":
+        if (Math.random() < 0.2) {
+          const x = Math.random() * w;
+          const y = Math.random() * h * 0.55;
+          spawnBurst(x, y, 1.8 + Math.random() * 1.4);
+          if (Math.random() < 0.5) spawnRing(x, y, 1.2 + Math.random());
+        }
+        if (Math.random() < 0.12) spawnConfetti(8);
+        if (Math.random() < 0.1) spawnStars(6);
+        break;
+      default:
+        break;
+    }
+    // keep bells alive until celebrate ends via celebrateUntil, not fxUntil alone
+    if (fxUntil && t > fxUntil && fxMode !== "bells") {
+      fxMode = "idle";
+      clearFxClasses();
+    }
+  }
+
   function updateFx() {
     if (reduceMotion) return;
     const w = window.innerWidth;
     const h = window.innerHeight;
     ctx.clearRect(0, 0, w, h);
 
-    const ladder = FX_LADDER[fxMode];
-    if (ladder && Math.random() < (ladder.ongoingBurst || 0)) {
-      const s = (ladder.ongoingBurstS || 1) * (0.85 + Math.random() * 0.35);
-      spawnBurst(Math.random() * w, h * (0.1 + Math.random() * 0.45), s);
-      if (ladder.ongoingStars) spawnStars(ladder.ongoingStars);
-      if (fxMode === "five" || fxMode === "bells") spawnGlitter(6);
-      if (fxMode === "bells") spawnGlitter(14);
-    }
+    ongoingFx(w, h);
 
     for (let i = bursts.length - 1; i >= 0; i -= 1) {
       const b = bursts[i];
       b.r += (b.max - b.r) * 0.08;
       b.life -= b.decay;
-      ctx.strokeStyle = `rgba(197, 160, 89, ${Math.max(b.life, 0) * 0.9})`;
-      ctx.lineWidth = 2.4;
-      for (let r = 0; r < b.rays; r += 1) {
-        const a = (Math.PI * 2 * r) / b.rays;
+      const alpha = Math.max(b.life, 0);
+      if (b.kind === "ring") {
+        ctx.strokeStyle = `rgba(224, 192, 120, ${alpha * 0.85})`;
+        ctx.lineWidth = b.line || 3;
         ctx.beginPath();
-        ctx.moveTo(b.x, b.y);
-        ctx.lineTo(b.x + Math.cos(a) * b.r, b.y + Math.sin(a) * b.r);
+        ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
         ctx.stroke();
+      } else {
+        ctx.strokeStyle = `rgba(197, 160, 89, ${alpha * 0.9})`;
+        ctx.lineWidth = 2.4;
+        for (let r = 0; r < b.rays; r += 1) {
+          const a = (Math.PI * 2 * r) / b.rays;
+          ctx.beginPath();
+          ctx.moveTo(b.x, b.y);
+          ctx.lineTo(b.x + Math.cos(a) * b.r, b.y + Math.sin(a) * b.r);
+          ctx.stroke();
+        }
       }
       if (b.life <= 0) bursts.splice(i, 1);
     }
 
     for (let i = particles.length - 1; i >= 0; i -= 1) {
       const p = particles[i];
-      p.x += p.vx;
-      p.y += p.vy;
       p.life -= p.decay;
-      if (p.kind === "star") {
+      const a = Math.max(p.life, 0);
+
+      if (p.kind === "ember") {
+        p.wobble += 0.08;
+        p.x += p.vx + Math.sin(p.wobble) * 0.35;
+        p.y += p.vy;
+        ctx.fillStyle = `rgba(224, 192, 120, ${a})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = `rgba(255, 244, 210, ${a * 0.5})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * 0.45, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (p.kind === "ribbon") {
+        p.x += p.vx;
+        p.y += p.vy + Math.sin(p.x * 0.02) * p.curl * 20;
+        ctx.strokeStyle = `rgba(197, 160, 89, ${a * 0.9})`;
+        ctx.lineWidth = p.width;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.quadraticCurveTo(
+          p.x - p.vx * 3,
+          p.y + 10,
+          p.x - Math.sign(p.vx) * p.length,
+          p.y + Math.sin(p.x * 0.03) * 16
+        );
+        ctx.stroke();
+      } else if (p.kind === "meteor") {
+        p.x += p.vx;
+        p.y += p.vy;
+        const ang = Math.atan2(p.vy, p.vx);
+        ctx.strokeStyle = `rgba(232, 213, 163, ${a})`;
+        ctx.lineWidth = p.width;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p.x - Math.cos(ang) * p.length, p.y - Math.sin(ang) * p.length);
+        ctx.stroke();
+        ctx.fillStyle = `rgba(255, 248, 220, ${a})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.width * 1.1, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (p.kind === "confetti") {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.02;
+        p.rot += p.vr;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle =
+          p.tone > 0.5
+            ? `rgba(197, 160, 89, ${a})`
+            : `rgba(20, 20, 20, ${a * 0.75})`;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
+      } else if (p.kind === "star") {
+        p.x += p.vx;
+        p.y += p.vy;
         p.rot += p.vr;
         p.vy += 0.01;
-        ctx.fillStyle = `rgba(197, 160, 89, ${Math.max(p.life, 0)})`;
+        ctx.fillStyle = `rgba(197, 160, 89, ${a})`;
         drawStar(p.x, p.y, p.size, p.rot);
       } else if (p.kind === "glitter") {
-        ctx.fillStyle = `rgba(224, 192, 120, ${Math.max(p.life, 0)})`;
+        p.x += p.vx;
+        p.y += p.vy;
+        ctx.fillStyle = `rgba(224, 192, 120, ${a})`;
         ctx.fillRect(p.x, p.y, p.size, p.size);
       } else {
+        p.x += p.vx;
+        p.y += p.vy;
         p.vy += 0.02;
-        ctx.fillStyle = `rgba(232, 213, 163, ${Math.max(p.life, 0)})`;
+        ctx.fillStyle = `rgba(232, 213, 163, ${a})`;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fill();
       }
-      if (p.life <= 0 || p.y > h + 40) particles.splice(i, 1);
-    }
 
-    if (fxUntil && nowWallMs() > fxUntil && fxMode !== "bells") {
-      fxMode = "idle";
-      document.body.classList.remove("fx-pulse", "fx-urgent");
+      if (
+        p.life <= 0 ||
+        p.y > h + 80 ||
+        p.y < -120 ||
+        p.x < -160 ||
+        p.x > w + 160
+      ) {
+        particles.splice(i, 1);
+      }
     }
   }
 
@@ -392,23 +577,44 @@
       if (cls) document.body.classList.add(cls);
     }
     showBanner(cfg.label, cfg.bannerMs || cfg.duration);
-    spawnGlitter(cfg.glitter);
-    spawnStars(cfg.stars);
 
-    if (cfg.bursts) {
-      for (const b of cfg.bursts) {
-        spawnBurst(w * b.x, h * b.y, b.s);
-      }
-    }
-    if (cfg.burstCount) {
-      const [sMin, sMax] = cfg.burstStrength || [1.5, 2.5];
-      for (let i = 0; i < cfg.burstCount; i += 1) {
-        spawnBurst(
-          Math.random() * w,
-          Math.random() * h * 0.58,
-          sMin + Math.random() * (sMax - sMin)
-        );
-      }
+    // Distinct opening volley per style
+    switch (cfg.style) {
+      case "embers":
+        spawnEmbers(90);
+        spawnGlitter(24);
+        break;
+      case "ribbons":
+        spawnRibbonWave(28);
+        spawnGlitter(40);
+        setTimeout(() => spawnRibbonWave(22), 400);
+        setTimeout(() => spawnRibbonWave(18), 900);
+        break;
+      case "fireworks":
+        spawnBurst(w * 0.2, h * 0.22, 1.4);
+        spawnBurst(w * 0.5, h * 0.16, 1.65);
+        spawnBurst(w * 0.8, h * 0.24, 1.4);
+        spawnStars(40);
+        break;
+      case "meteors":
+        spawnMeteors(28);
+        spawnStars(30);
+        setTimeout(() => spawnMeteors(22), 350);
+        setTimeout(() => spawnMeteors(18), 750);
+        break;
+      case "finale":
+        spawnConfetti(120);
+        spawnStars(100);
+        spawnGlitter(80);
+        for (let i = 0; i < 14; i += 1) {
+          const x = Math.random() * w;
+          const y = Math.random() * h * 0.55;
+          spawnBurst(x, y, 2.0 + Math.random() * 1.3);
+          if (i % 2 === 0) spawnRing(x, y, 1.4 + Math.random());
+        }
+        break;
+      default:
+        break;
     }
   }
 

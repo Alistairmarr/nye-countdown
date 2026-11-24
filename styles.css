@@ -372,6 +372,28 @@ body.fx-urgent .stage {
   animation: urgent-pulse 1.8s ease-in-out infinite;
 }
 
+/* Distinct atmosphere tints per milestone */
+body.fx-hour .atmosphere {
+  filter: saturate(1.05) brightness(1.02);
+}
+
+body.fx-half .ribbon {
+  opacity: 0.45;
+  animation-duration: 4s;
+}
+
+body.fx-ten .brand-script {
+  animation-duration: 1.8s;
+}
+
+body.fx-five .atmosphere {
+  filter: contrast(1.06) saturate(1.15);
+}
+
+body.fx-bells .atmosphere {
+  filter: saturate(1.2) brightness(1.05);
+}
+
 body.fx-urgent .banner {
   min-width: min(32rem, 94vw);
   padding: 1.15rem 2rem;
