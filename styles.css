@@ -80,12 +80,12 @@ body.phase-hour {
 }
 
 body.phase-hour .atmosphere {
-  filter: saturate(1.08) brightness(1.01);
+  filter: saturate(1.15) brightness(1.02);
   background:
-    radial-gradient(90% 60% at 50% 0%, #fff8e8 0%, transparent 55%),
-    radial-gradient(70% 50% at 100% 100%, #ecd7a8 0%, transparent 52%),
-    radial-gradient(60% 45% at 0% 80%, #f3e2c4 0%, transparent 45%),
-    linear-gradient(180deg, var(--paper) 0%, var(--paper-deep) 100%);
+    radial-gradient(90% 60% at 50% 0%, #fff0d0 0%, transparent 55%),
+    radial-gradient(70% 50% at 100% 100%, #e8c878 0%, transparent 52%),
+    radial-gradient(60% 45% at 0% 80%, #f0d8a8 0%, transparent 45%),
+    linear-gradient(180deg, #fff6e4 0%, #e8c888 100%);
 }
 
 body.phase-hour .glitter {

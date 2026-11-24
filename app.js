@@ -79,6 +79,8 @@
   ];
 
   let currentPhase = "day";
+  /** When set, keep a preview atmosphere (test menu) instead of real time-to-midnight. */
+  let phaseLockUntil = 0;
 
   /** Festive palette — gold + jewel tones (no purple). */
   const PALETTE = {
@@ -180,7 +182,7 @@
     const abs = Math.abs(offsetMin);
     const hh = pad(Math.floor(abs / 60), 2);
     const mm = pad(abs % 60, 2);
-    return `Local midnight ${targetYear} · ${zone} (UTC${sign}${hh}:${mm})`;
+    return `${targetYear} · ${zone} (UTC${sign}${hh}:${mm})`;
   }
 
   function resyncWallClock() {
@@ -237,25 +239,57 @@
     return "day";
   }
 
-  /** Page atmosphere shifts as midnight nears (independent of one-shot FX). */
-  function updatePhase(remaining) {
-    const phase = phaseFromRemaining(remaining);
+  function warmthForPhase(phase, remaining) {
+    if (phase === "bells") return 1;
+    if (phase === "five") return 0.92;
+    if (phase === "ten") return 0.78;
+    if (phase === "half") return 0.55;
+    if (phase === "hour") return 0.32;
+    if (remaining <= 3_600_000) {
+      return Math.pow(1 - Math.max(0, remaining) / 3_600_000, 0.85);
+    }
+    return 0;
+  }
+
+  function applyPhase(phase, warmth) {
     if (phase !== currentPhase) {
       document.body.classList.remove(...PHASE_CLASSES);
       document.body.classList.add(`phase-${phase}`);
       currentPhase = phase;
     }
+    document.documentElement.style.setProperty(
+      "--phase-warmth",
+      Number(warmth).toFixed(3)
+    );
+  }
 
-    // Smooth warmth 0→1 across the final hour (and full during bells)
-    let warmth = 0;
-    if (phase === "bells") warmth = 1;
-    else if (remaining <= 3_600_000) {
-      warmth = 1 - Math.max(0, remaining) / 3_600_000;
-      warmth = Math.pow(warmth, 0.85);
+  function lockPhase(phase, ms) {
+    applyPhase(phase, warmthForPhase(phase, 0));
+    phaseLockUntil = nowWallMs() + ms;
+  }
+
+  /** Page atmosphere shifts as midnight nears (independent of one-shot FX). */
+  function updatePhase(remaining) {
+    const now = nowWallMs();
+    if (phaseLockUntil && now < phaseLockUntil) {
+      // Keep test/preview atmosphere; still allow light ambient glitter
+      if (
+        !reduceMotion &&
+        currentPhase !== "day" &&
+        Math.random() < 0.02 + warmthForPhase(currentPhase, 0) * 0.05
+      ) {
+        spawnGlitter(1 + Math.floor(warmthForPhase(currentPhase, 0) * 3));
+      }
+      return;
     }
-    document.documentElement.style.setProperty("--phase-warmth", warmth.toFixed(3));
+    if (phaseLockUntil && now >= phaseLockUntil) {
+      phaseLockUntil = 0;
+    }
 
-    // Subtle ambient glitter in later phases (not during reduce-motion)
+    const phase = phaseFromRemaining(remaining);
+    const warmth = warmthForPhase(phase, remaining);
+    applyPhase(phase, warmth);
+
     if (!reduceMotion && phase !== "day" && Math.random() < 0.015 + warmth * 0.04) {
       spawnGlitter(1 + Math.floor(warmth * 3));
     }
@@ -732,8 +766,7 @@
 
   function showCountdownCopy() {
     els.headline.textContent = `Countdown to ${targetYear}`;
-    els.support.textContent =
-      "Ancrum Fete New Year’s Eve — local midnight, high precision.";
+    els.support.textContent = "Ancrum Fete New Year’s Eve party";
     els.timezone.textContent = timezoneLabel();
     els.celebrate.hidden = true;
     document.body.classList.remove("is-celebrate");
@@ -853,32 +886,17 @@
         document.body.classList.remove("is-celebrate");
       }
 
-      // Preview matching page atmosphere while testing
-      if (id !== "clear") {
-        const phase = id === "bells" ? "bells" : id;
-        document.body.classList.remove(...PHASE_CLASSES);
-        document.body.classList.add(`phase-${phase}`);
-        currentPhase = phase;
-        const warmth =
-          phase === "bells"
-            ? 1
-            : phase === "five"
-              ? 0.92
-              : phase === "ten"
-                ? 0.78
-                : phase === "half"
-                  ? 0.55
-                  : phase === "hour"
-                    ? 0.28
-                    : 0;
-        document.documentElement.style.setProperty(
-          "--phase-warmth",
-          String(warmth)
-        );
-      } else {
+      if (id === "clear") {
+        phaseLockUntil = 0;
+        playEffect(id, { testing: true });
         updatePhase(Math.max(0, targetMs - nowWallMs()));
+        return;
       }
 
+      const phase = id === "bells" ? "bells" : id;
+      const cfg = FX_LADDER[id];
+      // Lock atmosphere so the rAF loop doesn't snap back to "day" (~weeks out)
+      lockPhase(phase, (cfg && cfg.duration) || 20_000);
       playEffect(id, { testing: true });
     });
   }
