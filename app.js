@@ -2,8 +2,8 @@
   "use strict";
 
   const RESYNC_MS = 30_000;
-  const CELEBRATE_MS = 28_000;
-  const BANNER_MS = 9_000;
+  const CELEBRATE_MS = 55_000;
+  const BANNER_MS = 18_000;
 
   const MILESTONES = [
     { id: "hour", atMs: 3_600_000, label: "One hour to the bells" },
@@ -152,14 +152,14 @@
       particles.push({
         kind: "star",
         x: Math.random() * w,
-        y: -20 - Math.random() * h * 0.25 * spread,
-        vx: (Math.random() - 0.5) * 0.6,
-        vy: 0.9 + Math.random() * 1.8,
+        y: -20 - Math.random() * h * 0.35 * spread,
+        vx: (Math.random() - 0.5) * 0.85,
+        vy: 0.7 + Math.random() * 1.6,
         rot: Math.random() * Math.PI,
-        vr: (Math.random() - 0.5) * 0.08,
-        size: 3 + Math.random() * 5,
+        vr: (Math.random() - 0.5) * 0.1,
+        size: 5 + Math.random() * 9,
         life: 1,
-        decay: 0.0015 + Math.random() * 0.002,
+        decay: 0.0007 + Math.random() * 0.001,
       });
     }
   }
@@ -171,12 +171,12 @@
       particles.push({
         kind: "glitter",
         x: Math.random() * w,
-        y: Math.random() * h * 0.35,
-        vx: (Math.random() - 0.5) * 0.4,
-        vy: 0.3 + Math.random() * 0.9,
-        size: 1 + Math.random() * 2.2,
+        y: Math.random() * h * 0.45,
+        vx: (Math.random() - 0.5) * 0.55,
+        vy: 0.25 + Math.random() * 0.85,
+        size: 1.6 + Math.random() * 3.4,
         life: 1,
-        decay: 0.002 + Math.random() * 0.003,
+        decay: 0.0009 + Math.random() * 0.0014,
       });
     }
   }
@@ -186,24 +186,24 @@
       x,
       y,
       r: 0,
-      max: 40 + strength * 70,
+      max: 90 + strength * 140,
       life: 1,
-      decay: 0.012 / strength,
-      rays: 10 + Math.floor(strength * 8),
+      decay: 0.006 / Math.max(strength, 0.5),
+      rays: 14 + Math.floor(strength * 12),
     });
-    const n = Math.floor(18 * strength);
+    const n = Math.floor(36 * strength);
     for (let i = 0; i < n; i += 1) {
       const a = (Math.PI * 2 * i) / n + Math.random() * 0.2;
-      const speed = (1.6 + Math.random() * 2.8) * strength;
+      const speed = (2.4 + Math.random() * 4.2) * strength;
       particles.push({
         kind: "spark",
         x,
         y,
         vx: Math.cos(a) * speed,
         vy: Math.sin(a) * speed,
-        size: 1.5 + Math.random() * 2.5,
+        size: 2.2 + Math.random() * 3.8,
         life: 1,
-        decay: 0.01 + Math.random() * 0.012,
+        decay: 0.0045 + Math.random() * 0.006,
       });
     }
   }
@@ -231,21 +231,29 @@
     const h = window.innerHeight;
     ctx.clearRect(0, 0, w, h);
 
-    if (fxMode === "bells" && Math.random() < 0.08) {
-      spawnBurst(Math.random() * w, Math.random() * h * 0.55, 1.2 + Math.random());
-      spawnStars(4);
-    } else if (fxMode === "five" && Math.random() < 0.04) {
-      spawnBurst(Math.random() * w, h * (0.15 + Math.random() * 0.35), 0.85);
-    } else if (fxMode === "ten" && Math.random() < 0.025) {
-      spawnBurst(Math.random() * w, h * (0.2 + Math.random() * 0.3), 0.65);
+    if (fxMode === "bells" && Math.random() < 0.18) {
+      spawnBurst(Math.random() * w, Math.random() * h * 0.6, 1.6 + Math.random() * 1.2);
+      spawnStars(10);
+      spawnGlitter(8);
+    } else if (fxMode === "five" && Math.random() < 0.1) {
+      spawnBurst(Math.random() * w, h * (0.12 + Math.random() * 0.4), 1.25);
+      spawnStars(3);
+    } else if (fxMode === "ten" && Math.random() < 0.07) {
+      spawnBurst(Math.random() * w, h * (0.15 + Math.random() * 0.35), 1.0);
+    } else if (fxMode === "half" && Math.random() < 0.045) {
+      spawnBurst(Math.random() * w, h * (0.18 + Math.random() * 0.3), 0.85);
+      spawnStars(2);
+    } else if (fxMode === "hour" && Math.random() < 0.03) {
+      spawnStars(3);
+      spawnGlitter(4);
     }
 
     for (let i = bursts.length - 1; i >= 0; i -= 1) {
       const b = bursts[i];
       b.r += (b.max - b.r) * 0.08;
       b.life -= b.decay;
-      ctx.strokeStyle = `rgba(197, 160, 89, ${Math.max(b.life, 0) * 0.75})`;
-      ctx.lineWidth = 1.2;
+      ctx.strokeStyle = `rgba(197, 160, 89, ${Math.max(b.life, 0) * 0.9})`;
+      ctx.lineWidth = 2.4;
       for (let r = 0; r < b.rays; r += 1) {
         const a = (Math.PI * 2 * r) / b.rays;
         ctx.beginPath();
@@ -310,50 +318,60 @@
     switch (id) {
       case "hour":
         fxMode = "hour";
-        fxUntil = nowWallMs() + 8_000;
+        fxUntil = nowWallMs() + 18_000;
         document.body.classList.add("fx-pulse");
-        showBanner("One hour to the bells");
-        spawnGlitter(40);
-        spawnStars(18);
+        showBanner("One hour to the bells", 18_000);
+        spawnGlitter(120);
+        spawnStars(70);
+        spawnBurst(w * 0.5, h * 0.26, 1.1);
         break;
       case "half":
         fxMode = "half";
-        fxUntil = nowWallMs() + 9_000;
+        fxUntil = nowWallMs() + 20_000;
         document.body.classList.add("fx-pulse");
-        showBanner("Thirty minutes to go");
-        spawnGlitter(70);
-        spawnStars(36);
-        spawnBurst(w * 0.5, h * 0.28, 0.7);
+        showBanner("Thirty minutes to go", 20_000);
+        spawnGlitter(160);
+        spawnStars(110);
+        spawnBurst(w * 0.3, h * 0.24, 1.2);
+        spawnBurst(w * 0.7, h * 0.28, 1.2);
+        spawnBurst(w * 0.5, h * 0.18, 1.35);
         break;
       case "ten":
         fxMode = "ten";
-        fxUntil = nowWallMs() + 10_000;
+        fxUntil = nowWallMs() + 22_000;
         document.body.classList.add("fx-pulse");
-        showBanner("Ten minutes — nearly there");
-        spawnStars(50);
-        spawnBurst(w * 0.25, h * 0.25, 0.9);
-        spawnBurst(w * 0.75, h * 0.22, 0.9);
+        showBanner("Ten minutes — nearly there", 22_000);
+        spawnStars(150);
+        spawnGlitter(100);
+        spawnBurst(w * 0.2, h * 0.22, 1.45);
+        spawnBurst(w * 0.5, h * 0.16, 1.55);
+        spawnBurst(w * 0.8, h * 0.24, 1.45);
         break;
       case "five":
         fxMode = "five";
-        fxUntil = nowWallMs() + 12_000;
+        fxUntil = nowWallMs() + 26_000;
         document.body.classList.add("fx-urgent");
-        showBanner("Five minutes to midnight");
-        spawnStars(70);
-        spawnGlitter(50);
-        spawnBurst(w * 0.2, h * 0.2, 1);
-        spawnBurst(w * 0.5, h * 0.18, 1.1);
-        spawnBurst(w * 0.8, h * 0.22, 1);
+        showBanner("Five minutes to midnight", 26_000);
+        spawnStars(200);
+        spawnGlitter(150);
+        spawnBurst(w * 0.15, h * 0.2, 1.7);
+        spawnBurst(w * 0.38, h * 0.14, 1.85);
+        spawnBurst(w * 0.62, h * 0.16, 1.85);
+        spawnBurst(w * 0.85, h * 0.22, 1.7);
         break;
       case "bells":
         fxMode = "bells";
         fxUntil = nowWallMs() + CELEBRATE_MS;
         document.body.classList.add("is-celebrate", "fx-urgent");
-        showBanner("Happy New Year — the bells!", 14_000);
-        spawnStars(120);
-        spawnGlitter(90);
-        for (let i = 0; i < 8; i += 1) {
-          spawnBurst(Math.random() * w, Math.random() * h * 0.5, 1.1 + Math.random());
+        showBanner("Happy New Year — the bells!", 30_000);
+        spawnStars(280);
+        spawnGlitter(220);
+        for (let i = 0; i < 16; i += 1) {
+          spawnBurst(
+            Math.random() * w,
+            Math.random() * h * 0.55,
+            1.7 + Math.random() * 1.3
+          );
         }
         break;
       case "clear":
