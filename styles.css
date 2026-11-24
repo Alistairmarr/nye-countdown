@@ -374,24 +374,61 @@ body.fx-urgent .stage {
 
 /* Distinct atmosphere tints per milestone */
 body.fx-hour .atmosphere {
-  filter: saturate(1.05) brightness(1.02);
+  filter: saturate(1.12) brightness(1.03);
 }
 
 body.fx-half .ribbon {
-  opacity: 0.45;
-  animation-duration: 4s;
+  opacity: 0.55;
+  animation-duration: 3.2s;
+}
+
+body.fx-half .atmosphere {
+  filter: saturate(1.18) hue-rotate(-6deg);
 }
 
 body.fx-ten .brand-script {
-  animation-duration: 1.8s;
+  animation-duration: 1.6s;
+}
+
+body.fx-ten .atmosphere {
+  filter: saturate(1.25) contrast(1.04);
 }
 
 body.fx-five .atmosphere {
-  filter: contrast(1.06) saturate(1.15);
+  filter: contrast(1.08) saturate(1.3);
+}
+
+body.fx-five .banner {
+  background: linear-gradient(
+    135deg,
+    #8a2e3a 0%,
+    #e0c078 28%,
+    #c4783b 52%,
+    #2f7a5b 78%,
+    #e8d5a3 100%
+  );
+  background-size: 220% 220%;
+  color: #fffef8;
+}
+
+body.fx-five .banner-text {
+  color: #1a1a1a;
 }
 
 body.fx-bells .atmosphere {
-  filter: saturate(1.2) brightness(1.05);
+  filter: saturate(1.35) brightness(1.06);
+}
+
+body.fx-bells .banner {
+  background: linear-gradient(
+    120deg,
+    #b33a4a 0%,
+    #c5a059 25%,
+    #2f7a5b 50%,
+    #e0c078 75%,
+    #c4783b 100%
+  );
+  background-size: 240% 240%;
 }
 
 body.fx-urgent .banner {

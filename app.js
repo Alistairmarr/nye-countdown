@@ -69,6 +69,34 @@
     "is-celebrate",
   ];
 
+  /** Festive palette — gold + jewel tones (no purple). */
+  const PALETTE = {
+    gold: [197, 160, 89],
+    champagne: [232, 213, 163],
+    copper: [196, 120, 59],
+    ruby: [179, 58, 74],
+    emerald: [47, 122, 91],
+    rose: [212, 137, 122],
+    cream: [255, 248, 231],
+    ink: [26, 26, 26],
+  };
+
+  const PALETTE_LIST = Object.values(PALETTE);
+
+  function rgba(rgb, a) {
+    return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${a})`;
+  }
+
+  function pick(list) {
+    return list[Math.floor(Math.random() * list.length)];
+  }
+
+  function mixTone(base, amount = 0.2) {
+    return base.map((c) =>
+      Math.max(0, Math.min(255, Math.round(c + (Math.random() - 0.5) * 40 * amount * 5)))
+    );
+  }
+
   const els = {
     headline: document.getElementById("headline"),
     support: document.getElementById("support"),
@@ -203,18 +231,20 @@
   function spawnStars(count, spread = 1) {
     const w = window.innerWidth;
     const h = window.innerHeight;
+    const colors = [PALETTE.gold, PALETTE.champagne, PALETTE.copper, PALETTE.ruby];
     for (let i = 0; i < count; i += 1) {
       particles.push({
         kind: "star",
         x: Math.random() * w,
         y: -20 - Math.random() * h * 0.35 * spread,
-        vx: (Math.random() - 0.5) * 0.85,
-        vy: 0.7 + Math.random() * 1.6,
+        vx: (Math.random() - 0.5) * 1.1,
+        vy: 0.85 + Math.random() * 2.0,
         rot: Math.random() * Math.PI,
-        vr: (Math.random() - 0.5) * 0.1,
-        size: 5 + Math.random() * 9,
+        vr: (Math.random() - 0.5) * 0.12,
+        size: 8 + Math.random() * 14,
         life: 1,
-        decay: 0.0007 + Math.random() * 0.001,
+        decay: 0.00055 + Math.random() * 0.0009,
+        color: mixTone(pick(colors)),
       });
     }
   }
@@ -222,35 +252,39 @@
   function spawnGlitter(count) {
     const w = window.innerWidth;
     const h = window.innerHeight;
+    const colors = [PALETTE.champagne, PALETTE.gold, PALETTE.cream, PALETTE.rose];
     for (let i = 0; i < count; i += 1) {
       particles.push({
         kind: "glitter",
         x: Math.random() * w,
-        y: Math.random() * h * 0.45,
-        vx: (Math.random() - 0.5) * 0.55,
-        vy: 0.25 + Math.random() * 0.85,
-        size: 1.6 + Math.random() * 3.4,
+        y: Math.random() * h * 0.5,
+        vx: (Math.random() - 0.5) * 0.7,
+        vy: 0.3 + Math.random() * 1.0,
+        size: 2.4 + Math.random() * 5,
         life: 1,
-        decay: 0.0009 + Math.random() * 0.0014,
+        decay: 0.0007 + Math.random() * 0.0012,
+        color: mixTone(pick(colors)),
       });
     }
   }
 
-  /** Soft rising gold embers — 1 hour warning */
+  /** Soft rising embers — 1 hour warning */
   function spawnEmbers(count) {
     const w = window.innerWidth;
     const h = window.innerHeight;
+    const colors = [PALETTE.copper, PALETTE.gold, PALETTE.rose, PALETTE.champagne];
     for (let i = 0; i < count; i += 1) {
       particles.push({
         kind: "ember",
         x: Math.random() * w,
-        y: h + 10 + Math.random() * 80,
-        vx: (Math.random() - 0.5) * 0.35,
-        vy: -(0.6 + Math.random() * 1.4),
-        size: 2 + Math.random() * 4,
+        y: h + 10 + Math.random() * 100,
+        vx: (Math.random() - 0.5) * 0.45,
+        vy: -(0.85 + Math.random() * 1.8),
+        size: 3.5 + Math.random() * 7,
         life: 1,
-        decay: 0.0008 + Math.random() * 0.0012,
+        decay: 0.0006 + Math.random() * 0.001,
         wobble: Math.random() * Math.PI * 2,
+        color: mixTone(pick(colors)),
       });
     }
   }
@@ -260,62 +294,69 @@
     const w = window.innerWidth;
     const h = window.innerHeight;
     const fromLeft = Math.random() > 0.5;
+    const colors = [PALETTE.gold, PALETTE.ruby, PALETTE.emerald, PALETTE.copper, PALETTE.rose];
     for (let i = 0; i < count; i += 1) {
-      const y = h * (0.15 + Math.random() * 0.7);
+      const y = h * (0.12 + Math.random() * 0.76);
       particles.push({
         kind: "ribbon",
-        x: fromLeft ? -40 - Math.random() * 80 : w + 40 + Math.random() * 80,
+        x: fromLeft ? -60 - Math.random() * 100 : w + 60 + Math.random() * 100,
         y,
-        vx: (fromLeft ? 1 : -1) * (4.5 + Math.random() * 5.5),
-        vy: Math.sin(i) * 0.35,
-        length: 40 + Math.random() * 70,
-        width: 2 + Math.random() * 3.5,
+        vx: (fromLeft ? 1 : -1) * (5.5 + Math.random() * 7),
+        vy: Math.sin(i) * 0.45,
+        length: 70 + Math.random() * 110,
+        width: 3.5 + Math.random() * 5.5,
         life: 1,
-        decay: 0.0012 + Math.random() * 0.001,
-        curl: (Math.random() - 0.5) * 0.08,
+        decay: 0.0009 + Math.random() * 0.0009,
+        curl: (Math.random() - 0.5) * 0.1,
+        color: mixTone(pick(colors)),
       });
     }
   }
 
   function spawnBurst(x, y, strength = 1) {
+    const burstColors = [PALETTE.gold, PALETTE.ruby, PALETTE.emerald, PALETTE.copper, PALETTE.champagne];
+    const color = pick(burstColors);
     bursts.push({
       x,
       y,
       r: 0,
-      max: 90 + strength * 140,
+      max: 140 + strength * 200,
       life: 1,
-      decay: 0.006 / Math.max(strength, 0.5),
-      rays: 14 + Math.floor(strength * 12),
+      decay: 0.005 / Math.max(strength, 0.5),
+      rays: 18 + Math.floor(strength * 14),
       kind: "rays",
+      color,
     });
-    const n = Math.floor(36 * strength);
+    const n = Math.floor(48 * strength);
     for (let i = 0; i < n; i += 1) {
       const a = (Math.PI * 2 * i) / n + Math.random() * 0.2;
-      const speed = (2.4 + Math.random() * 4.2) * strength;
+      const speed = (3.2 + Math.random() * 5.5) * strength;
       particles.push({
         kind: "spark",
         x,
         y,
         vx: Math.cos(a) * speed,
         vy: Math.sin(a) * speed,
-        size: 2.2 + Math.random() * 3.8,
+        size: 3.2 + Math.random() * 5.5,
         life: 1,
-        decay: 0.0045 + Math.random() * 0.006,
+        decay: 0.0035 + Math.random() * 0.005,
+        color: mixTone(i % 3 === 0 ? pick(burstColors) : color),
       });
     }
   }
 
-  /** Expanding gold rings — used in finale */
+  /** Expanding coloured rings — finale */
   function spawnRing(x, y, strength = 1) {
     bursts.push({
       kind: "ring",
       x,
       y,
-      r: 4,
-      max: 120 + strength * 180,
+      r: 6,
+      max: 160 + strength * 240,
       life: 1,
-      decay: 0.008 / Math.max(strength, 0.5),
-      line: 3 + strength * 2,
+      decay: 0.0065 / Math.max(strength, 0.5),
+      line: 4 + strength * 3,
+      color: pick([PALETTE.gold, PALETTE.ruby, PALETTE.emerald, PALETTE.champagne]),
     });
   }
 
@@ -323,39 +364,41 @@
   function spawnMeteors(count) {
     const w = window.innerWidth;
     const h = window.innerHeight;
+    const colors = [PALETTE.ruby, PALETTE.gold, PALETTE.champagne, PALETTE.copper, PALETTE.emerald];
     for (let i = 0; i < count; i += 1) {
-      const speed = 7 + Math.random() * 9;
+      const speed = 9 + Math.random() * 12;
       particles.push({
         kind: "meteor",
-        x: Math.random() * w * 1.2 - w * 0.1,
-        y: -30 - Math.random() * h * 0.4,
-        vx: 3 + Math.random() * 4,
+        x: Math.random() * w * 1.25 - w * 0.1,
+        y: -40 - Math.random() * h * 0.45,
+        vx: 4 + Math.random() * 5,
         vy: speed,
-        length: 28 + Math.random() * 48,
-        width: 2 + Math.random() * 2.5,
+        length: 48 + Math.random() * 70,
+        width: 3 + Math.random() * 4,
         life: 1,
-        decay: 0.002 + Math.random() * 0.0025,
+        decay: 0.0016 + Math.random() * 0.002,
+        color: mixTone(pick(colors)),
       });
     }
   }
 
-  /** Falling confetti rectangles — finale accent */
+  /** Falling confetti — finale accent */
   function spawnConfetti(count) {
     const w = window.innerWidth;
     for (let i = 0; i < count; i += 1) {
       particles.push({
         kind: "confetti",
         x: Math.random() * w,
-        y: -20 - Math.random() * 120,
-        vx: (Math.random() - 0.5) * 2.2,
-        vy: 1.4 + Math.random() * 2.6,
+        y: -20 - Math.random() * 140,
+        vx: (Math.random() - 0.5) * 2.8,
+        vy: 1.6 + Math.random() * 3.2,
         rot: Math.random() * Math.PI,
-        vr: (Math.random() - 0.5) * 0.2,
-        w: 5 + Math.random() * 8,
-        h: 3 + Math.random() * 5,
+        vr: (Math.random() - 0.5) * 0.25,
+        w: 8 + Math.random() * 12,
+        h: 5 + Math.random() * 8,
         life: 1,
-        decay: 0.0006 + Math.random() * 0.0009,
-        tone: Math.random(),
+        decay: 0.00045 + Math.random() * 0.0007,
+        color: mixTone(pick(PALETTE_LIST.filter((c) => c !== PALETTE.ink))),
       });
     }
   }
@@ -381,34 +424,34 @@
     const t = nowWallMs();
     switch (fxMode) {
       case "hour":
-        if (Math.random() < 0.12) spawnEmbers(3);
+        if (Math.random() < 0.18) spawnEmbers(5);
         break;
       case "half":
-        if (Math.random() < 0.06) spawnRibbonWave(5 + Math.floor(Math.random() * 4));
-        if (Math.random() < 0.04) spawnGlitter(4);
+        if (Math.random() < 0.09) spawnRibbonWave(8 + Math.floor(Math.random() * 5));
+        if (Math.random() < 0.06) spawnGlitter(6);
         break;
       case "ten":
-        if (Math.random() < 0.085) {
+        if (Math.random() < 0.12) {
           spawnBurst(
             Math.random() * w,
-            h * (0.12 + Math.random() * 0.4),
-            1.1 + Math.random() * 0.5
+            h * (0.1 + Math.random() * 0.45),
+            1.45 + Math.random() * 0.7
           );
         }
         break;
       case "five":
-        if (Math.random() < 0.16) spawnMeteors(2 + Math.floor(Math.random() * 3));
-        if (Math.random() < 0.05) spawnStars(2);
+        if (Math.random() < 0.22) spawnMeteors(4 + Math.floor(Math.random() * 4));
+        if (Math.random() < 0.07) spawnStars(4);
         break;
       case "bells":
-        if (Math.random() < 0.2) {
+        if (Math.random() < 0.28) {
           const x = Math.random() * w;
-          const y = Math.random() * h * 0.55;
-          spawnBurst(x, y, 1.8 + Math.random() * 1.4);
-          if (Math.random() < 0.5) spawnRing(x, y, 1.2 + Math.random());
+          const y = Math.random() * h * 0.58;
+          spawnBurst(x, y, 2.3 + Math.random() * 1.6);
+          if (Math.random() < 0.6) spawnRing(x, y, 1.5 + Math.random());
         }
-        if (Math.random() < 0.12) spawnConfetti(8);
-        if (Math.random() < 0.1) spawnStars(6);
+        if (Math.random() < 0.16) spawnConfetti(14);
+        if (Math.random() < 0.12) spawnStars(10);
         break;
       default:
         break;
@@ -433,15 +476,16 @@
       b.r += (b.max - b.r) * 0.08;
       b.life -= b.decay;
       const alpha = Math.max(b.life, 0);
+      const bc = b.color || PALETTE.gold;
       if (b.kind === "ring") {
-        ctx.strokeStyle = `rgba(224, 192, 120, ${alpha * 0.85})`;
-        ctx.lineWidth = b.line || 3;
+        ctx.strokeStyle = rgba(bc, alpha * 0.9);
+        ctx.lineWidth = b.line || 4;
         ctx.beginPath();
         ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
         ctx.stroke();
       } else {
-        ctx.strokeStyle = `rgba(197, 160, 89, ${alpha * 0.9})`;
-        ctx.lineWidth = 2.4;
+        ctx.strokeStyle = rgba(bc, alpha * 0.92);
+        ctx.lineWidth = 3.2;
         for (let r = 0; r < b.rays; r += 1) {
           const a = (Math.PI * 2 * r) / b.rays;
           ctx.beginPath();
@@ -458,47 +502,57 @@
       p.life -= p.decay;
       const a = Math.max(p.life, 0);
 
+      const c = p.color || PALETTE.gold;
       if (p.kind === "ember") {
         p.wobble += 0.08;
         p.x += p.vx + Math.sin(p.wobble) * 0.35;
         p.y += p.vy;
-        ctx.fillStyle = `rgba(224, 192, 120, ${a})`;
+        ctx.fillStyle = rgba(c, a);
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillStyle = `rgba(255, 244, 210, ${a * 0.5})`;
+        ctx.fillStyle = rgba(PALETTE.cream, a * 0.55);
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size * 0.45, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, p.size * 0.4, 0, Math.PI * 2);
         ctx.fill();
       } else if (p.kind === "ribbon") {
         p.x += p.vx;
         p.y += p.vy + Math.sin(p.x * 0.02) * p.curl * 20;
-        ctx.strokeStyle = `rgba(197, 160, 89, ${a * 0.9})`;
+        ctx.strokeStyle = rgba(c, a * 0.95);
         ctx.lineWidth = p.width;
         ctx.lineCap = "round";
         ctx.beginPath();
         ctx.moveTo(p.x, p.y);
         ctx.quadraticCurveTo(
           p.x - p.vx * 3,
-          p.y + 10,
+          p.y + 12,
           p.x - Math.sign(p.vx) * p.length,
-          p.y + Math.sin(p.x * 0.03) * 16
+          p.y + Math.sin(p.x * 0.03) * 20
         );
         ctx.stroke();
       } else if (p.kind === "meteor") {
         p.x += p.vx;
         p.y += p.vy;
         const ang = Math.atan2(p.vy, p.vx);
-        ctx.strokeStyle = `rgba(232, 213, 163, ${a})`;
+        const grad = ctx.createLinearGradient(
+          p.x,
+          p.y,
+          p.x - Math.cos(ang) * p.length,
+          p.y - Math.sin(ang) * p.length
+        );
+        grad.addColorStop(0, rgba(PALETTE.cream, a));
+        grad.addColorStop(0.35, rgba(c, a));
+        grad.addColorStop(1, rgba(c, 0));
+        ctx.strokeStyle = grad;
         ctx.lineWidth = p.width;
         ctx.lineCap = "round";
         ctx.beginPath();
         ctx.moveTo(p.x, p.y);
         ctx.lineTo(p.x - Math.cos(ang) * p.length, p.y - Math.sin(ang) * p.length);
         ctx.stroke();
-        ctx.fillStyle = `rgba(255, 248, 220, ${a})`;
+        ctx.fillStyle = rgba(PALETTE.cream, a);
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.width * 1.1, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, p.width * 1.2, 0, Math.PI * 2);
         ctx.fill();
       } else if (p.kind === "confetti") {
         p.x += p.vx;
@@ -508,10 +562,7 @@
         ctx.save();
         ctx.translate(p.x, p.y);
         ctx.rotate(p.rot);
-        ctx.fillStyle =
-          p.tone > 0.5
-            ? `rgba(197, 160, 89, ${a})`
-            : `rgba(20, 20, 20, ${a * 0.75})`;
+        ctx.fillStyle = rgba(c, a);
         ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
         ctx.restore();
       } else if (p.kind === "star") {
@@ -519,18 +570,18 @@
         p.y += p.vy;
         p.rot += p.vr;
         p.vy += 0.01;
-        ctx.fillStyle = `rgba(197, 160, 89, ${a})`;
+        ctx.fillStyle = rgba(c, a);
         drawStar(p.x, p.y, p.size, p.rot);
       } else if (p.kind === "glitter") {
         p.x += p.vx;
         p.y += p.vy;
-        ctx.fillStyle = `rgba(224, 192, 120, ${a})`;
+        ctx.fillStyle = rgba(c, a);
         ctx.fillRect(p.x, p.y, p.size, p.size);
       } else {
         p.x += p.vx;
         p.y += p.vy;
         p.vy += 0.02;
-        ctx.fillStyle = `rgba(232, 213, 163, ${a})`;
+        ctx.fillStyle = rgba(c, a);
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fill();
@@ -578,39 +629,42 @@
     }
     showBanner(cfg.label, cfg.bannerMs || cfg.duration);
 
-    // Distinct opening volley per style
+    // Distinct opening volley per style — bigger + colourful
     switch (cfg.style) {
       case "embers":
-        spawnEmbers(90);
-        spawnGlitter(24);
+        spawnEmbers(140);
+        spawnGlitter(40);
         break;
       case "ribbons":
-        spawnRibbonWave(28);
-        spawnGlitter(40);
-        setTimeout(() => spawnRibbonWave(22), 400);
-        setTimeout(() => spawnRibbonWave(18), 900);
+        spawnRibbonWave(40);
+        spawnGlitter(55);
+        setTimeout(() => spawnRibbonWave(32), 350);
+        setTimeout(() => spawnRibbonWave(28), 800);
         break;
       case "fireworks":
-        spawnBurst(w * 0.2, h * 0.22, 1.4);
-        spawnBurst(w * 0.5, h * 0.16, 1.65);
-        spawnBurst(w * 0.8, h * 0.24, 1.4);
-        spawnStars(40);
+        spawnBurst(w * 0.18, h * 0.22, 1.85);
+        spawnBurst(w * 0.5, h * 0.14, 2.2);
+        spawnBurst(w * 0.82, h * 0.24, 1.85);
+        spawnBurst(w * 0.35, h * 0.32, 1.5);
+        spawnBurst(w * 0.65, h * 0.3, 1.5);
+        spawnStars(70);
         break;
       case "meteors":
-        spawnMeteors(28);
-        spawnStars(30);
-        setTimeout(() => spawnMeteors(22), 350);
-        setTimeout(() => spawnMeteors(18), 750);
+        spawnMeteors(42);
+        spawnStars(50);
+        setTimeout(() => spawnMeteors(34), 300);
+        setTimeout(() => spawnMeteors(28), 650);
+        setTimeout(() => spawnMeteors(22), 1100);
         break;
       case "finale":
-        spawnConfetti(120);
-        spawnStars(100);
-        spawnGlitter(80);
-        for (let i = 0; i < 14; i += 1) {
+        spawnConfetti(200);
+        spawnStars(160);
+        spawnGlitter(120);
+        for (let i = 0; i < 20; i += 1) {
           const x = Math.random() * w;
-          const y = Math.random() * h * 0.55;
-          spawnBurst(x, y, 2.0 + Math.random() * 1.3);
-          if (i % 2 === 0) spawnRing(x, y, 1.4 + Math.random());
+          const y = Math.random() * h * 0.58;
+          spawnBurst(x, y, 2.5 + Math.random() * 1.5);
+          if (i % 2 === 0) spawnRing(x, y, 1.7 + Math.random());
         }
         break;
       default:
