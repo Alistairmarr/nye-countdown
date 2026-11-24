@@ -2,7 +2,7 @@
   "use strict";
 
   const RESYNC_MS = 30_000;
-  const CELEBRATE_MS = 55_000;
+  const CELEBRATE_MS = 60_000;
   const BANNER_MS = 18_000;
 
   const MILESTONES = [
@@ -11,6 +11,84 @@
     { id: "ten", atMs: 600_000, label: "Ten minutes — nearly there" },
     { id: "five", atMs: 300_000, label: "Five minutes to midnight" },
   ];
+
+  /** Progressive intensity ladder — each step clearly bigger than the last. */
+  const FX_LADDER = {
+    hour: {
+      label: "One hour to the bells",
+      duration: 16_000,
+      bannerMs: 16_000,
+      bodyClass: "fx-pulse",
+      glitter: 50,
+      stars: 28,
+      bursts: [{ x: 0.5, y: 0.28, s: 0.75 }],
+      ongoingBurst: 0.02,
+      ongoingBurstS: 0.55,
+      ongoingStars: 1,
+    },
+    half: {
+      label: "Thirty minutes to go",
+      duration: 20_000,
+      bannerMs: 20_000,
+      bodyClass: "fx-pulse",
+      glitter: 110,
+      stars: 70,
+      bursts: [
+        { x: 0.28, y: 0.26, s: 1.05 },
+        { x: 0.72, y: 0.24, s: 1.05 },
+      ],
+      ongoingBurst: 0.045,
+      ongoingBurstS: 0.85,
+      ongoingStars: 2,
+    },
+    ten: {
+      label: "Ten minutes — nearly there",
+      duration: 24_000,
+      bannerMs: 24_000,
+      bodyClass: "fx-pulse",
+      glitter: 160,
+      stars: 140,
+      bursts: [
+        { x: 0.18, y: 0.24, s: 1.35 },
+        { x: 0.5, y: 0.16, s: 1.55 },
+        { x: 0.82, y: 0.22, s: 1.35 },
+      ],
+      ongoingBurst: 0.08,
+      ongoingBurstS: 1.15,
+      ongoingStars: 4,
+    },
+    five: {
+      label: "Five minutes to midnight",
+      duration: 30_000,
+      bannerMs: 30_000,
+      bodyClass: "fx-urgent",
+      glitter: 240,
+      stars: 220,
+      bursts: [
+        { x: 0.12, y: 0.22, s: 1.7 },
+        { x: 0.35, y: 0.14, s: 1.95 },
+        { x: 0.65, y: 0.15, s: 1.95 },
+        { x: 0.88, y: 0.22, s: 1.7 },
+        { x: 0.5, y: 0.3, s: 1.6 },
+      ],
+      ongoingBurst: 0.13,
+      ongoingBurstS: 1.45,
+      ongoingStars: 7,
+    },
+    bells: {
+      label: "Happy New Year — the bells!",
+      duration: CELEBRATE_MS,
+      bannerMs: 36_000,
+      bodyClass: "is-celebrate fx-urgent",
+      glitter: 360,
+      stars: 340,
+      burstCount: 22,
+      burstStrength: [2.1, 3.2],
+      ongoingBurst: 0.22,
+      ongoingBurstS: 2.0,
+      ongoingStars: 12,
+    },
+  };
 
   const els = {
     headline: document.getElementById("headline"),
@@ -231,21 +309,13 @@
     const h = window.innerHeight;
     ctx.clearRect(0, 0, w, h);
 
-    if (fxMode === "bells" && Math.random() < 0.18) {
-      spawnBurst(Math.random() * w, Math.random() * h * 0.6, 1.6 + Math.random() * 1.2);
-      spawnStars(10);
-      spawnGlitter(8);
-    } else if (fxMode === "five" && Math.random() < 0.1) {
-      spawnBurst(Math.random() * w, h * (0.12 + Math.random() * 0.4), 1.25);
-      spawnStars(3);
-    } else if (fxMode === "ten" && Math.random() < 0.07) {
-      spawnBurst(Math.random() * w, h * (0.15 + Math.random() * 0.35), 1.0);
-    } else if (fxMode === "half" && Math.random() < 0.045) {
-      spawnBurst(Math.random() * w, h * (0.18 + Math.random() * 0.3), 0.85);
-      spawnStars(2);
-    } else if (fxMode === "hour" && Math.random() < 0.03) {
-      spawnStars(3);
-      spawnGlitter(4);
+    const ladder = FX_LADDER[fxMode];
+    if (ladder && Math.random() < (ladder.ongoingBurst || 0)) {
+      const s = (ladder.ongoingBurstS || 1) * (0.85 + Math.random() * 0.35);
+      spawnBurst(Math.random() * w, h * (0.1 + Math.random() * 0.45), s);
+      if (ladder.ongoingStars) spawnStars(ladder.ongoingStars);
+      if (fxMode === "five" || fxMode === "bells") spawnGlitter(6);
+      if (fxMode === "bells") spawnGlitter(14);
     }
 
     for (let i = bursts.length - 1; i >= 0; i -= 1) {
@@ -294,15 +364,16 @@
   }
 
   function playEffect(id, { testing = false } = {}) {
+    if (id === "clear") {
+      clearEffects();
+      return;
+    }
+
+    const cfg = FX_LADDER[id];
+    if (!cfg) return;
+
     if (reduceMotion && !testing) {
-      const labels = {
-        hour: "One hour to the bells",
-        half: "Thirty minutes to go",
-        ten: "Ten minutes — nearly there",
-        five: "Five minutes to midnight",
-        bells: "Happy New Year — the bells!",
-      };
-      if (labels[id]) showBanner(labels[id], BANNER_MS);
+      showBanner(cfg.label, cfg.bannerMs || BANNER_MS);
       return;
     }
 
@@ -315,70 +386,29 @@
     const w = window.innerWidth;
     const h = window.innerHeight;
 
-    switch (id) {
-      case "hour":
-        fxMode = "hour";
-        fxUntil = nowWallMs() + 18_000;
-        document.body.classList.add("fx-pulse");
-        showBanner("One hour to the bells", 18_000);
-        spawnGlitter(120);
-        spawnStars(70);
-        spawnBurst(w * 0.5, h * 0.26, 1.1);
-        break;
-      case "half":
-        fxMode = "half";
-        fxUntil = nowWallMs() + 20_000;
-        document.body.classList.add("fx-pulse");
-        showBanner("Thirty minutes to go", 20_000);
-        spawnGlitter(160);
-        spawnStars(110);
-        spawnBurst(w * 0.3, h * 0.24, 1.2);
-        spawnBurst(w * 0.7, h * 0.28, 1.2);
-        spawnBurst(w * 0.5, h * 0.18, 1.35);
-        break;
-      case "ten":
-        fxMode = "ten";
-        fxUntil = nowWallMs() + 22_000;
-        document.body.classList.add("fx-pulse");
-        showBanner("Ten minutes — nearly there", 22_000);
-        spawnStars(150);
-        spawnGlitter(100);
-        spawnBurst(w * 0.2, h * 0.22, 1.45);
-        spawnBurst(w * 0.5, h * 0.16, 1.55);
-        spawnBurst(w * 0.8, h * 0.24, 1.45);
-        break;
-      case "five":
-        fxMode = "five";
-        fxUntil = nowWallMs() + 26_000;
-        document.body.classList.add("fx-urgent");
-        showBanner("Five minutes to midnight", 26_000);
-        spawnStars(200);
-        spawnGlitter(150);
-        spawnBurst(w * 0.15, h * 0.2, 1.7);
-        spawnBurst(w * 0.38, h * 0.14, 1.85);
-        spawnBurst(w * 0.62, h * 0.16, 1.85);
-        spawnBurst(w * 0.85, h * 0.22, 1.7);
-        break;
-      case "bells":
-        fxMode = "bells";
-        fxUntil = nowWallMs() + CELEBRATE_MS;
-        document.body.classList.add("is-celebrate", "fx-urgent");
-        showBanner("Happy New Year — the bells!", 30_000);
-        spawnStars(280);
-        spawnGlitter(220);
-        for (let i = 0; i < 16; i += 1) {
-          spawnBurst(
-            Math.random() * w,
-            Math.random() * h * 0.55,
-            1.7 + Math.random() * 1.3
-          );
-        }
-        break;
-      case "clear":
-        clearEffects();
-        break;
-      default:
-        break;
+    fxMode = id;
+    fxUntil = nowWallMs() + cfg.duration;
+    for (const cls of cfg.bodyClass.split(/\s+/)) {
+      if (cls) document.body.classList.add(cls);
+    }
+    showBanner(cfg.label, cfg.bannerMs || cfg.duration);
+    spawnGlitter(cfg.glitter);
+    spawnStars(cfg.stars);
+
+    if (cfg.bursts) {
+      for (const b of cfg.bursts) {
+        spawnBurst(w * b.x, h * b.y, b.s);
+      }
+    }
+    if (cfg.burstCount) {
+      const [sMin, sMax] = cfg.burstStrength || [1.5, 2.5];
+      for (let i = 0; i < cfg.burstCount; i += 1) {
+        spawnBurst(
+          Math.random() * w,
+          Math.random() * h * 0.58,
+          sMin + Math.random() * (sMax - sMin)
+        );
+      }
     }
   }
 

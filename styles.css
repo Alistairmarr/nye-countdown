@@ -372,6 +372,20 @@ body.fx-urgent .stage {
   animation: urgent-pulse 1.8s ease-in-out infinite;
 }
 
+body.fx-urgent .banner {
+  min-width: min(32rem, 94vw);
+  padding: 1.15rem 2rem;
+  transform: scale(1.06);
+}
+
+body.is-celebrate .banner {
+  min-width: min(34rem, 96vw);
+  transform: scale(1.1);
+  box-shadow:
+    0 14px 36px rgba(138, 106, 46, 0.4),
+    0 0 0 3px rgba(20, 20, 20, 0.1);
+}
+
 /* Temporary test panel */
 .test-panel {
   position: fixed;
