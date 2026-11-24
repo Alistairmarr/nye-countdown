@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="NYE — a high-precision countdown to your local New Year's midnight."
+    />
+    <title>NYE — New Year Countdown</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Manrope:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="atmosphere" aria-hidden="true">
+      <div class="orb orb-a"></div>
+      <div class="orb orb-b"></div>
+      <div class="haze"></div>
+    </div>
+
+    <main class="stage">
+      <p class="brand">NYE</p>
+      <h1 class="headline" id="headline">Countdown to local midnight</h1>
+      <p class="support" id="support">
+        Precision timer for January 1 in your timezone.
+      </p>
+
+      <div
+        class="countdown"
+        id="countdown"
+        role="timer"
+        aria-live="off"
+        aria-atomic="true"
+      >
+        <div class="unit">
+          <span class="value" data-unit="days">00</span>
+          <span class="label">Days</span>
+        </div>
+        <div class="sep" aria-hidden="true">:</div>
+        <div class="unit">
+          <span class="value" data-unit="hours">00</span>
+          <span class="label">Hours</span>
+        </div>
+        <div class="sep" aria-hidden="true">:</div>
+        <div class="unit">
+          <span class="value" data-unit="minutes">00</span>
+          <span class="label">Minutes</span>
+        </div>
+        <div class="sep" aria-hidden="true">:</div>
+        <div class="unit">
+          <span class="value" data-unit="seconds">00</span>
+          <span class="label">Seconds</span>
+        </div>
+        <div class="sep ms-sep" aria-hidden="true">.</div>
+        <div class="unit unit-ms">
+          <span class="value value-ms" data-unit="ms">000</span>
+          <span class="label">Millis</span>
+        </div>
+      </div>
+
+      <p class="timezone" id="timezone"></p>
+
+      <section class="celebrate" id="celebrate" hidden>
+        <p class="celebrate-title">Happy New Year</p>
+        <p class="celebrate-year" id="celebrate-year"></p>
+      </section>
+    </main>
+
+    <script src="./app.js" defer></script>
+  </body>
+</html>
