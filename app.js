@@ -82,6 +82,11 @@
   /** When set, keep a preview atmosphere (test menu) instead of real time-to-midnight. */
   let phaseLockUntil = 0;
 
+  /** @type {AudioContext | null} */
+  let audioCtx = null;
+  let audioUnlocked = false;
+  let soundMuted = false;
+
   /** Festive palette — gold + jewel tones (no purple). */
   const PALETTE = {
     gold: [197, 160, 89],
@@ -228,6 +233,125 @@
 
   function clearFxClasses() {
     document.body.classList.remove(...FX_BODY_CLASSES);
+  }
+
+  function ensureAudio() {
+    if (!audioCtx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      audioCtx = new AC();
+    }
+    if (audioCtx.state === "suspended") {
+      audioCtx.resume().catch(() => {});
+    }
+    audioUnlocked = true;
+    return audioCtx;
+  }
+
+  function unlockAudioFromGesture() {
+    ensureAudio();
+  }
+
+  function playTone(freq, start, dur, type, gainVal, slideTo) {
+    const ctx = audioCtx;
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, start);
+    if (slideTo) {
+      osc.frequency.exponentialRampToValueAtTime(
+        Math.max(slideTo, 20),
+        start + dur
+      );
+    }
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(gainVal, start + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(start);
+    osc.stop(start + dur + 0.02);
+  }
+
+  function playNoiseBurst(start, dur, gainVal) {
+    const ctx = audioCtx;
+    if (!ctx) return;
+    const frames = Math.floor(ctx.sampleRate * dur);
+    const buffer = ctx.createBuffer(1, frames, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < frames; i += 1) {
+      data[i] = (Math.random() * 2 - 1) * (1 - i / frames);
+    }
+    const src = ctx.createBufferSource();
+    const filter = ctx.createBiquadFilter();
+    const gain = ctx.createGain();
+    src.buffer = buffer;
+    filter.type = "bandpass";
+    filter.frequency.value = 1800;
+    filter.Q.value = 0.8;
+    gain.gain.setValueAtTime(gainVal, start);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    src.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    src.start(start);
+    src.stop(start + dur + 0.02);
+  }
+
+  /**
+   * Distinct escalating warning sounds (synthesized — no media files).
+   * hour: soft warm chime · half: brighter double chime · ten: fanfare
+   * five: urgent peal · bells: celebratory bell cascade
+   */
+  function playWarningSound(id) {
+    if (soundMuted) return;
+    const ctx = ensureAudio();
+    if (!ctx) return;
+    const t0 = ctx.currentTime + 0.02;
+
+    switch (id) {
+      case "hour":
+        playTone(392, t0, 1.4, "sine", 0.12);
+        playTone(493.88, t0 + 0.15, 1.5, "triangle", 0.08);
+        break;
+      case "half":
+        playTone(440, t0, 0.7, "sine", 0.14);
+        playTone(554.37, t0 + 0.12, 0.8, "triangle", 0.1);
+        playTone(659.25, t0 + 0.55, 1.2, "sine", 0.13);
+        playTone(880, t0 + 0.7, 1.0, "triangle", 0.07);
+        break;
+      case "ten":
+        playTone(523.25, t0, 0.35, "square", 0.06);
+        playTone(659.25, t0 + 0.18, 0.35, "square", 0.06);
+        playTone(783.99, t0 + 0.36, 0.45, "square", 0.07);
+        playTone(1046.5, t0 + 0.55, 1.1, "triangle", 0.11);
+        playNoiseBurst(t0 + 0.55, 0.25, 0.04);
+        break;
+      case "five":
+        playTone(311.13, t0, 0.28, "sawtooth", 0.07);
+        playTone(369.99, t0 + 0.22, 0.28, "sawtooth", 0.07);
+        playTone(466.16, t0 + 0.44, 0.35, "sawtooth", 0.08);
+        playTone(622.25, t0 + 0.7, 1.4, "triangle", 0.14);
+        playTone(933.88, t0 + 0.85, 1.2, "sine", 0.08);
+        playNoiseBurst(t0 + 0.7, 0.35, 0.055);
+        break;
+      case "bells":
+        // Deep peal + bright cascade
+        [196, 246.94, 293.66, 392, 493.88, 587.33, 784].forEach((f, i) => {
+          playTone(f, t0 + i * 0.18, 2.2 - i * 0.12, "sine", 0.1 - i * 0.008);
+          playTone(f * 2, t0 + i * 0.18 + 0.04, 1.6, "triangle", 0.04);
+        });
+        playNoiseBurst(t0 + 0.2, 0.5, 0.045);
+        playNoiseBurst(t0 + 1.2, 0.4, 0.035);
+        // Final resolve
+        playTone(523.25, t0 + 1.6, 2.4, "sine", 0.12);
+        playTone(659.25, t0 + 1.75, 2.5, "triangle", 0.09);
+        playTone(783.99, t0 + 1.9, 2.6, "sine", 0.08);
+        break;
+      default:
+        break;
+    }
   }
 
   function phaseFromRemaining(remaining) {
@@ -748,6 +872,8 @@
     const cfg = FX_LADDER[id];
     if (!cfg) return;
 
+    playWarningSound(id);
+
     if (reduceMotion && !testing) {
       showBanner(cfg.label, cfg.bannerMs || BANNER_MS);
       return;
@@ -921,14 +1047,26 @@
 
   function bindTestMenu() {
     els.testToggle.addEventListener("click", () => {
+      unlockAudioFromGesture();
       const open = els.testBody.hidden;
       els.testBody.hidden = !open;
       els.testToggle.setAttribute("aria-expanded", open ? "true" : "false");
     });
 
+    const muteBtn = document.getElementById("mute-toggle");
+    if (muteBtn) {
+      muteBtn.addEventListener("click", () => {
+        unlockAudioFromGesture();
+        soundMuted = !soundMuted;
+        muteBtn.textContent = soundMuted ? "Sound: off" : "Sound: on";
+        muteBtn.setAttribute("aria-pressed", soundMuted ? "true" : "false");
+      });
+    }
+
     els.testBody.addEventListener("click", (e) => {
       const btn = e.target.closest("[data-test]");
       if (!btn) return;
+      unlockAudioFromGesture();
       const id = btn.getAttribute("data-test");
       if (id === "bells") {
         els.celebrate.hidden = false;
@@ -957,6 +1095,14 @@
   function start() {
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
+    // Browsers need a gesture before sound; unlock on first interaction
+    const unlockOnce = () => {
+      unlockAudioFromGesture();
+      window.removeEventListener("pointerdown", unlockOnce);
+      window.removeEventListener("keydown", unlockOnce);
+    };
+    window.addEventListener("pointerdown", unlockOnce);
+    window.addEventListener("keydown", unlockOnce);
     const wall = resyncWallClock();
     retarget(wall);
 
