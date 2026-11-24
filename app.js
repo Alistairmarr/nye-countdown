@@ -322,7 +322,8 @@
     stopActiveSound();
     try {
       audio.muted = false;
-      audio.volume = id === "five" ? 1 : 0.9;
+      // Max HTMLMediaElement volume; loudness lives in the MP3s themselves
+      audio.volume = 1;
       audio.currentTime = 0;
       const playPromise = audio.play();
       activeSound = audio;
@@ -397,39 +398,41 @@
 
     switch (id) {
       case "hour":
-        playTone(392, t0, 1.4, "sine", 0.12);
-        playTone(493.88, t0 + 0.15, 1.5, "triangle", 0.08);
+        playTone(196, t0, 2.0, "sine", 0.18);
+        playTone(392, t0, 1.8, "sine", 0.22);
+        playTone(493.88, t0 + 0.12, 1.9, "triangle", 0.16);
         break;
       case "half":
-        playTone(440, t0, 0.7, "sine", 0.14);
-        playTone(554.37, t0 + 0.12, 0.8, "triangle", 0.1);
-        playTone(659.25, t0 + 0.55, 1.2, "sine", 0.13);
-        playTone(880, t0 + 0.7, 1.0, "triangle", 0.07);
+        playTone(440, t0, 0.8, "sine", 0.24);
+        playTone(554.37, t0 + 0.1, 0.9, "triangle", 0.18);
+        playTone(659.25, t0 + 0.55, 1.4, "sine", 0.26);
+        playTone(880, t0 + 0.7, 1.2, "triangle", 0.16);
         break;
       case "ten":
-        playTone(523.25, t0, 0.35, "square", 0.06);
-        playTone(659.25, t0 + 0.18, 0.35, "square", 0.06);
-        playTone(783.99, t0 + 0.36, 0.45, "square", 0.07);
-        playTone(1046.5, t0 + 0.55, 1.1, "triangle", 0.11);
-        playNoiseBurst(t0 + 0.55, 0.25, 0.04);
+        playTone(523.25, t0, 0.4, "square", 0.12);
+        playTone(659.25, t0 + 0.18, 0.4, "square", 0.12);
+        playTone(783.99, t0 + 0.36, 0.5, "square", 0.14);
+        playTone(1046.5, t0 + 0.55, 1.3, "triangle", 0.2);
+        playNoiseBurst(t0 + 0.55, 0.35, 0.1);
         break;
       case "five":
-        // Klaxon-style alternating tones
-        for (let i = 0; i < 6; i += 1) {
-          playTone(900, t0 + i * 0.56, 0.26, "sawtooth", 0.1);
-          playTone(620, t0 + i * 0.56 + 0.28, 0.26, "sawtooth", 0.1);
+        // Louder klaxon-style alternating tones
+        for (let i = 0; i < 8; i += 1) {
+          playTone(900 + i * 12, t0 + i * 0.56, 0.28, "sawtooth", 0.2);
+          playTone(620 + i * 8, t0 + i * 0.56 + 0.28, 0.28, "sawtooth", 0.2);
+          playTone(110, t0 + i * 0.56, 0.4, "sine", 0.16);
         }
         break;
       case "bells":
-        [196, 246.94, 293.66, 392, 493.88, 587.33, 784].forEach((f, i) => {
-          playTone(f, t0 + i * 0.18, 2.2 - i * 0.12, "sine", 0.1 - i * 0.008);
-          playTone(f * 2, t0 + i * 0.18 + 0.04, 1.6, "triangle", 0.04);
+        [98, 196, 246.94, 293.66, 392, 493.88, 587.33, 784].forEach((f, i) => {
+          playTone(f, t0 + i * 0.16, 2.4 - i * 0.1, "sine", 0.18 - i * 0.01);
+          playTone(f * 2, t0 + i * 0.16 + 0.04, 1.8, "triangle", 0.08);
         });
-        playNoiseBurst(t0 + 0.2, 0.5, 0.045);
-        playNoiseBurst(t0 + 1.2, 0.4, 0.035);
-        playTone(523.25, t0 + 1.6, 2.4, "sine", 0.12);
-        playTone(659.25, t0 + 1.75, 2.5, "triangle", 0.09);
-        playTone(783.99, t0 + 1.9, 2.6, "sine", 0.08);
+        playNoiseBurst(t0 + 0.2, 0.6, 0.1);
+        playNoiseBurst(t0 + 1.2, 0.5, 0.08);
+        playTone(523.25, t0 + 1.8, 2.8, "sine", 0.22);
+        playTone(659.25, t0 + 1.95, 2.8, "triangle", 0.16);
+        playTone(783.99, t0 + 2.1, 2.8, "sine", 0.14);
         break;
       default:
         break;
